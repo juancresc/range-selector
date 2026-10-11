@@ -17,7 +17,16 @@
     --rs-radius: .5rem;
     --rs-height: 2.75rem;
 
+    /* Mismo ancho en todos lados: con 26rem entran las dos fechas con sus
+       etiquetas al costado. Más angosto se achica (etiquetas arriba), pero nunca
+       por debajo de 17.5rem, donde las dos fechas todavía se leen enteras. */
+    --rs-width: 26rem;
+    --rs-min-width: 17.5rem;
+
     position: relative;
+    width: 100%;
+    max-width: var(--rs-width);
+    min-width: var(--rs-min-width);
     font-size: 14px;
     color: var(--rs-text);
 }
@@ -82,7 +91,7 @@
 /* Control angosto (grilla de 4 columnas, mobile): la etiqueta pasa arriba de la
    fecha, dentro del mismo alto, y la fecha usa todo el ancho del campo. */
 .rs-control { container-type: inline-size; container-name: rs; }
-@container rs (max-width: 26rem) {
+@container rs (max-width: 24rem) {
     .rs-field { flex-direction: column; align-items: stretch; justify-content: center; gap: 0; padding: 0 .5rem; }
     .rs-tag { font-size: .5625rem; line-height: 1; margin-bottom: .125rem; }
     .rs-wrap { height: auto; flex: none; }

@@ -123,6 +123,18 @@ Every color comes from CSS variables on `.rs`; just override them:
 }
 ```
 
+### Width
+
+The control has the same width everywhere: `--rs-width` (default `26rem`, enough for
+both dates with their labels beside them). In a narrower container it shrinks and the
+labels move above the dates, but never below `--rs-min-width` (default `17.5rem`), where
+both dates are still fully readable. In a filter grid, give its cell enough room
+(e.g. two columns).
+
+```css
+.rs { --rs-width: 30rem; --rs-min-width: 18rem; }
+```
+
 ## Development
 
 ```bash
