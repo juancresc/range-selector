@@ -1,8 +1,20 @@
 # RangeSelector
 
-The usability-first date picker. A **From → To** date range selector with no dependencies.
+The usability-first date range picker. No dependencies.
 
 **[Live demo & playground →](https://juancresc.github.io/range-selector/)**
+
+## Why
+
+Classic range pickers give you one calendar and expect two clicks. Many users can't
+tell which date they're picking, From or To, or how to change one end without
+starting over.
+
+RangeSelector shows the range as two consecutive inputs, **From → To**. You always
+see which date you're editing, you can change either end on its own, and you can
+type a date instead of hunting for it in a calendar.
+
+## Features
 
 - **Two typeable, masked inputs** (`dd/mm/yyyy`) inside a single control.
   The `__/__/____` guide fills in as you type; completing From jumps to To
