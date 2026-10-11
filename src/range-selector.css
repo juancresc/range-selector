@@ -1,0 +1,171 @@
+/*
+ * RangeSelector — estilos. Los colores salen de variables: para adaptarlo a otra
+ * UI alcanza con pisarlas en `.rs` (o en un contenedor).
+ */
+.rs {
+    --rs-accent: #3b82f6;
+    --rs-accent-dark: #2563eb;
+    --rs-accent-soft: #eff6ff;
+    --rs-accent-text: #1d4ed8;
+    --rs-border: #e2e8f0;
+    --rs-text: #0f172a;
+    --rs-muted: #94a3b8;
+    --rs-subtle: #64748b;
+    --rs-hover: #f1f5f9;
+    --rs-bg: #fff;
+    --rs-danger: #ef4444;
+    --rs-radius: .5rem;
+    --rs-height: 2.75rem;
+
+    position: relative;
+    font-size: 14px;
+    color: var(--rs-text);
+}
+.rs *, .rs *::before, .rs *::after { box-sizing: border-box; }
+
+/* ---------- Control: [Desde] → [Hasta] [📅] ---------- */
+.rs-control {
+    position: relative; display: flex; align-items: stretch; height: var(--rs-height);
+    background: var(--rs-bg); border: 1px solid var(--rs-border); border-radius: var(--rs-radius);
+    transition: border-color .15s, box-shadow .15s;
+}
+.rs-control:focus-within, .rs-open .rs-control {
+    border-color: var(--rs-accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+}
+.rs-has-error .rs-control { border-color: var(--rs-danger); box-shadow: 0 0 0 3px rgba(239, 68, 68, .1); }
+
+.rs-field {
+    position: relative; flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: .5rem;
+    padding: 0 .75rem; margin: 3px; border-radius: calc(var(--rs-radius) - 3px); cursor: text;
+}
+/* Con el calendario abierto, el campo que recibe el próximo click queda marcado. */
+.rs-open .rs-field.rs-active { background: var(--rs-accent-soft); }
+.rs-open .rs-field.rs-active .rs-tag { color: var(--rs-accent-text); }
+.rs-field.rs-invalid .rs-tag { color: var(--rs-danger); }
+
+.rs-tag {
+    flex: none; font-size: .6875rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+    color: var(--rs-muted); user-select: none;
+}
+.rs-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; height: 100%; }
+.rs-input {
+    width: 100%; height: 100%; padding: 0; border: 0; outline: none; background: transparent;
+    font: inherit; font-variant-numeric: tabular-nums; color: var(--rs-text);
+    /* Pisa estilos globales de inputs (height/border con !important de algunos backoffice). */
+    box-shadow: none !important; min-height: 0 !important;
+}
+.rs-ghost {
+    position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden;
+    white-space: pre; pointer-events: none; color: var(--rs-muted); font-variant-numeric: tabular-nums;
+}
+.rs-typed { visibility: hidden; }
+.rs-sep { flex: none; display: flex; align-items: center; color: #cbd5e1; user-select: none; }
+
+/* Rango vacío y nadie tipeando: «Todas las fechas» tapa los dos campos. */
+.rs-vacio {
+    position: absolute; top: 0; bottom: 0; left: 0; right: var(--rs-height); display: none; align-items: center;
+    padding: 0 .75rem; color: var(--rs-muted); background: var(--rs-bg); pointer-events: none;
+    border-radius: var(--rs-radius) 0 0 var(--rs-radius);
+}
+.rs-is-empty .rs-vacio { display: flex; }
+
+.rs-btn {
+    flex: none; width: var(--rs-height); display: grid; place-items: center; padding: 0; cursor: pointer;
+    border: 0; border-left: 1px solid var(--rs-border); background: transparent; color: var(--rs-subtle);
+    border-radius: 0 var(--rs-radius) var(--rs-radius) 0;
+}
+.rs-btn:hover { background: #f8fafc; color: var(--rs-text); }
+.rs-open .rs-btn { background: var(--rs-accent-soft); color: var(--rs-accent-dark); }
+.rs-btn:focus-visible { outline: 2px solid var(--rs-accent); outline-offset: -2px; }
+
+/* Control angosto (grilla de 4 columnas, mobile): la etiqueta pasa arriba de la
+   fecha, dentro del mismo alto, y la fecha usa todo el ancho del campo. */
+.rs-control { container-type: inline-size; container-name: rs; }
+@container rs (max-width: 26rem) {
+    .rs-field { flex-direction: column; align-items: stretch; justify-content: center; gap: 0; padding: 0 .5rem; }
+    .rs-tag { font-size: .5625rem; line-height: 1; margin-bottom: .125rem; }
+    .rs-wrap { height: auto; flex: none; }
+    .rs-input { height: 1.25rem; line-height: 1.25rem; font-size: .8125rem; }
+    .rs-ghost { font-size: .8125rem; }
+    .rs-sep { font-size: .75rem; }
+}
+
+.rs-error { display: none; margin-top: .25rem; font-size: .75rem; color: var(--rs-danger); }
+.rs-has-error .rs-error { display: block; }
+
+/* ---------- Panel ---------- */
+.rs-panel {
+    position: absolute; z-index: 50; top: calc(100% + .375rem); left: 0; display: none;
+    background: var(--rs-bg); border: 1px solid var(--rs-border); border-radius: .75rem;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, .12), 0 8px 10px -6px rgba(15, 23, 42, .08);
+}
+.rs-open .rs-panel { display: flex; }
+
+.rs-presets {
+    display: flex; flex-direction: column; min-width: 9.5rem; padding: .5rem;
+    border-right: 1px solid var(--rs-border);
+}
+.rs-preset {
+    padding: .375rem .625rem; border: 0; border-radius: .375rem; background: transparent; cursor: pointer;
+    font: inherit; font-size: .8125rem; color: #334155; text-align: left; white-space: nowrap;
+}
+.rs-preset:hover { background: var(--rs-hover); }
+.rs-preset.rs-on { background: var(--rs-accent-soft); color: var(--rs-accent-text); font-weight: 500; }
+
+.rs-main { padding: .75rem; }
+.rs-months { display: flex; gap: 1.25rem; }
+.rs-month { width: 15.75rem; }
+.rs-mhead { display: flex; align-items: center; justify-content: space-between; height: 2rem; margin-bottom: .25rem; }
+.rs-mtitle { flex: 1; text-align: center; font-weight: 600; font-size: .875rem; }
+.rs-nav {
+    width: 2rem; height: 2rem; display: grid; place-items: center; padding: 0; cursor: pointer;
+    border: 0; border-radius: .375rem; background: transparent; color: var(--rs-subtle);
+}
+.rs-nav:hover { background: var(--rs-hover); color: var(--rs-text); }
+/* Con dos meses, cada flecha va de su lado; en mobile se ve uno solo y lleva las dos. */
+.rs-nav[data-rs-hide-desktop] { visibility: hidden; }
+
+.rs-days { display: grid; grid-template-columns: repeat(7, 2.25rem); }
+.rs-dow { height: 1.75rem; display: grid; place-items: center; font-size: .6875rem; font-weight: 600; color: var(--rs-muted); }
+.rs-day {
+    position: relative; height: 2.25rem; padding: 0; border: 0; background: transparent; cursor: pointer;
+    font: inherit; font-size: .8125rem; color: var(--rs-text); font-variant-numeric: tabular-nums;
+}
+.rs-day span { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0 auto; border-radius: 999px; }
+.rs-day:hover:not(:disabled) span { background: var(--rs-hover); }
+.rs-day.rs-out { color: #cbd5e1; }
+.rs-day.rs-today span { box-shadow: inset 0 0 0 1px #93c5fd; }
+.rs-day.rs-in-range { background: var(--rs-accent-soft); }
+.rs-day.rs-in-range span { color: var(--rs-accent-text); }
+.rs-day.rs-preview { background: #f8fafc; }
+.rs-day.rs-preview span { color: var(--rs-accent-text); }
+.rs-day.rs-start { background: linear-gradient(to right, transparent 50%, var(--rs-accent-soft) 50%); }
+.rs-day.rs-end { background: linear-gradient(to left, transparent 50%, var(--rs-accent-soft) 50%); }
+.rs-day.rs-start.rs-end { background: transparent; }
+.rs-day.rs-start span, .rs-day.rs-end span { background: var(--rs-accent) !important; color: #fff; font-weight: 600; }
+.rs-day:disabled { cursor: not-allowed; color: #cbd5e1; }
+.rs-day:focus-visible { outline: none; }
+.rs-day:focus-visible span { box-shadow: 0 0 0 2px var(--rs-accent); }
+
+.rs-pfoot {
+    display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+    margin-top: .5rem; padding-top: .625rem; border-top: 1px solid var(--rs-border);
+}
+.rs-hint { font-size: .75rem; color: var(--rs-subtle); }
+.rs-hint b { color: var(--rs-accent-text); font-weight: 600; }
+.rs-pbtns { display: flex; gap: .375rem; }
+.rs-pbtn {
+    height: 2rem; padding: 0 .75rem; border: 0; border-radius: .375rem; cursor: pointer;
+    font: inherit; font-size: .8125rem; font-weight: 500;
+}
+.rs-pbtn-clear { background: transparent; color: #475569; }
+.rs-pbtn-clear:hover { background: var(--rs-hover); }
+.rs-pbtn-done { background: var(--rs-accent); color: #fff; }
+.rs-pbtn-done:hover { background: var(--rs-accent-dark); }
+
+@media (max-width: 720px) {
+    .rs-panel { flex-direction: column; }
+    .rs-presets { flex-direction: row; flex-wrap: wrap; min-width: 0; border-right: 0; border-bottom: 1px solid var(--rs-border); }
+    .rs-month + .rs-month { display: none; }
+    .rs-nav[data-rs-hide-desktop] { visibility: visible; }
+}

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RangeSelector — selector de rango de fechas Desde → Hasta</title>
+<link rel="stylesheet" href="src/range-selector.css">
+<style>
+    :root {
+        --ink: #0f172a; --muted: #64748b; --soft: #94a3b8; --line: #e2e8f0; --bg: #f8fafc;
+        --accent: #3b82f6; --accent-soft: #eff6ff; --accent-ink: #1d4ed8; --code-bg: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+        margin: 0; background: var(--bg); color: var(--ink);
+        font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    a { color: var(--accent-ink); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, kbd, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    :not(pre) > code { font-size: .85em; background: #eef2f7; padding: .1rem .35rem; border-radius: .3rem; }
+    kbd {
+        font-size: .78rem; background: #fff; border: 1px solid var(--line); border-bottom-width: 2px;
+        padding: .05rem .4rem; border-radius: .35rem; white-space: nowrap;
+    }
+    .wrap { max-width: 68rem; margin: 0 auto; padding: 0 1.25rem; }
+
+    /* Nav */
+    nav.top {
+        position: sticky; top: 0; z-index: 100; background: rgba(248,250,252,.85);
+        backdrop-filter: saturate(1.4) blur(8px); border-bottom: 1px solid var(--line);
+    }
+    nav.top .wrap { display: flex; align-items: center; gap: 1.5rem; height: 3.5rem; }
+    .brand { font-weight: 700; letter-spacing: -.01em; display: flex; align-items: center; gap: .5rem; color: var(--ink); }
+    .brand svg { color: var(--accent); }
+    nav.top .links { display: flex; gap: 1.25rem; margin-left: auto; font-size: .875rem; }
+    nav.top .links a { color: var(--muted); }
+    nav.top .links a:hover { color: var(--ink); text-decoration: none; }
+    @media (max-width: 720px) { nav.top .links { display: none; } }
+
+    /* Hero */
+    .hero { padding: 3rem 0 2.5rem; text-align: center; }
+    .hero h1 { font-size: 2rem; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 .5rem; }
+    .hero p.lead { color: var(--muted); font-size: 1rem; max-width: 40rem; margin: 0 auto 1.75rem; }
+    .hero-demo {
+        max-width: 34rem; margin: 0 auto; text-align: left; background: #fff; border: 1px solid var(--line);
+        border-radius: 1rem; padding: 1.25rem; 
+    }
+
+    /* Secciones */
+    section { padding: 3.5rem 0; border-top: 1px solid var(--line); }
+    section h2 { font-size: 1.625rem; letter-spacing: -.02em; margin: 0 0 .5rem; }
+    section p.intro { color: var(--muted); margin: 0 0 2rem; max-width: 44rem; }
+
+
+    /* Ejemplo: demo en vivo + código */
+    .example {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #fff;
+        border: 1px solid var(--line); border-radius: .875rem; margin-bottom: 1.25rem; overflow: visible;
+    }
+    @media (max-width: 860px) { .example { grid-template-columns: 1fr; } }
+    .example .live { padding: 1.25rem; border-right: 1px solid var(--line); }
+    @media (max-width: 860px) { .example .live { border-right: 0; border-bottom: 1px solid var(--line); } }
+    .example h3 { font-size: 1rem; margin: 0 0 .25rem; }
+    .example .desc { color: var(--muted); font-size: .875rem; margin: 0 0 1rem; }
+    .lbl { display: block; font-size: .75rem; font-weight: 500; color: var(--muted); margin-bottom: .3rem; }
+    .value {
+        margin-top: .875rem; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted);
+        background: var(--bg); border: 1px dashed var(--line); border-radius: .5rem; padding: .4rem .6rem;
+    }
+    .value b { color: var(--ink); font-weight: 600; }
+    .code { position: relative; background: var(--code-bg); border-radius: 0 .875rem .875rem 0; min-width: 0; }
+    @media (max-width: 860px) { .code { border-radius: 0 0 .875rem .875rem; } }
+    .code pre { margin: 0; padding: 1.25rem; overflow: auto; color: #e2e8f0; font-size: 12.5px; line-height: 1.65; max-height: 22rem; }
+    .copy {
+        position: absolute; top: .6rem; right: .6rem; font: 500 .75rem/1 inherit; font-family: inherit;
+        background: rgba(255,255,255,.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,.12);
+        border-radius: .4rem; padding: .35rem .6rem; cursor: pointer;
+    }
+    .copy:hover { background: rgba(255,255,255,.16); color: #fff; }
+    /* Resaltado mínimo */
+    .tk-tag { color: #93c5fd; } .tk-attr { color: #c4b5fd; } .tk-str { color: #86efac; }
+    .tk-com { color: #64748b; font-style: italic; } .tk-key { color: #f9a8d4; }
+
+    /* Playground */
+    .play { display: grid; grid-template-columns: 18rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    @media (max-width: 860px) { .play { grid-template-columns: 1fr; } }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: .875rem; padding: 1.25rem; }
+    .panel h3 { font-size: .8125rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 .75rem; }
+    .panel h3 + * { margin-top: 0; }
+    .opt { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .45rem 0; font-size: .875rem; }
+    .opt + .opt { border-top: 1px solid #f1f5f9; }
+    .opt input[type=text], .opt input[type=date], .opt select {
+        font: inherit; font-size: .8125rem; border: 1px solid var(--line); border-radius: .4rem; padding: .3rem .5rem; width: 9.5rem; background: #fff;
+    }
+    .opt input[type=color] { width: 2.25rem; height: 1.75rem; border: 1px solid var(--line); border-radius: .4rem; padding: 0; background: #fff; cursor: pointer; }
+    /* Switch */
+    .sw { position: relative; width: 2.25rem; height: 1.3rem; flex: none; }
+    .sw input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; z-index: 1; }
+    .sw span { position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px; transition: background .15s; }
+    .sw span::after { content: ""; position: absolute; top: 2px; left: 2px; width: calc(1.3rem - 4px); height: calc(1.3rem - 4px); background: #fff; border-radius: 50%; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+    .sw input:checked + span { background: var(--accent); }
+    .sw input:checked + span::after { transform: translateX(.95rem); }
+    .sw input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .stage { min-height: 30rem; }
+    .stage-box { padding: 1.25rem; background: #fff; border: 1px solid var(--line); border-radius: .875rem; }
+    .log {
+        margin-top: 1rem; background: var(--code-bg); color: #cbd5e1; border-radius: .75rem; padding: .75rem 1rem;
+        font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; height: 9.5rem; overflow: auto;
+    }
+    .log .t { color: #64748b; } .log .e { color: #93c5fd; } .log .v { color: #86efac; }
+    .api { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    .api button {
+        font: 500 .8125rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; background: #fff; color: var(--ink);
+        border: 1px solid var(--line); border-radius: .45rem; padding: .5rem .7rem; cursor: pointer;
+    }
+    .api button:hover { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+
+    /* Tablas */
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: .875rem; overflow: hidden; font-size: .875rem; }
+    th, td { text-align: left; padding: .65rem .9rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    th { background: #f8fafc; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    td code { white-space: nowrap; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+
+    /* Guía */
+    .steps { counter-reset: paso; display: grid; gap: 1.25rem; }
+    .step {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #fff;
+        border: 1px solid var(--line); border-radius: .875rem;
+    }
+    @media (max-width: 860px) { .step { grid-template-columns: 1fr; } }
+    .step .txt { padding: 1.25rem 1.25rem 1.25rem 3.75rem; position: relative; }
+    .step .txt::before {
+        counter-increment: paso; content: counter(paso); position: absolute; left: 1.25rem; top: 1.2rem;
+        width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center;
+        background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: .8125rem;
+    }
+    .step h3 { font-size: 1rem; margin: 0 0 .4rem; }
+    .step p, .step li { color: #475569; font-size: .9rem; margin: 0 0 .5rem; }
+    .step ul { margin: 0 0 .5rem; padding-left: 1.1rem; }
+    .step .code { border-radius: 0 .875rem .875rem 0; }
+    @media (max-width: 860px) { .step .code { border-radius: 0 0 .875rem .875rem; } }
+
+
+    /* --- Versión simple: menos cajas, código claro --- */
+    nav.top { position: static; background: #fff; backdrop-filter: none; }
+    .hero { text-align: left; padding: 2.5rem 0 2rem; }
+    .hero p.lead { margin: 0 0 1.25rem; }
+    .hero-demo { margin: 0; max-width: 34rem; padding: 0; border: 0; background: transparent; }
+    section { padding: 2.5rem 0; }
+    section h2 { font-size: 1.375rem; }
+    section p.intro { margin-bottom: 1.25rem; }
+    .feat { margin: 0; padding-left: 1.1rem; columns: 2 22rem; column-gap: 2.5rem; color: #475569; }
+    .feat li { margin: 0 0 .6rem; break-inside: avoid; }
+    .feat b { color: var(--ink); }
+    .example, .step { border-radius: .5rem; }
+    .code { background: #f8fafc; border-left: 1px solid var(--line); border-radius: 0 .5rem .5rem 0; }
+    .code pre { color: #334155; }
+    .copy { background: #fff; color: #475569; border-color: var(--line); }
+    .copy:hover { background: #f1f5f9; color: var(--ink); }
+    .tk-tag { color: #1d4ed8; } .tk-attr { color: #7c3aed; } .tk-str { color: #047857; }
+    .tk-com { color: #94a3b8; } .tk-key { color: #be185d; }
+    .step .txt { padding: 1.25rem; }
+    .step .txt::before { position: static; display: inline-grid; width: 1.5rem; height: 1.5rem; margin-bottom: .5rem; font-size: .75rem; }
+    .step .code { border-radius: 0 .5rem .5rem 0; }
+    .panel, .stage-box, table { border-radius: .5rem; }
+    .log { background: #f8fafc; color: #334155; border: 1px solid var(--line); border-radius: .5rem; }
+    .log .t { color: #94a3b8; } .log .e { color: #1d4ed8; } .log .v { color: #047857; }
+    @media (max-width: 860px) { .code, .step .code { border-left: 0; border-top: 1px solid var(--line); border-radius: 0 0 .5rem .5rem; } }
+
+    footer { padding: 2.5rem 0 4rem; color: var(--soft); font-size: .8125rem; text-align: center; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+
+<nav class="top">
+    <div class="wrap">
+        <a class="brand" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15h3M13 15h3"/></svg>
+            RangeSelector
+        </a>
+        <div class="links">
+            <a href="#features">Características</a>
+            <a href="#guia">Guía de uso</a>
+            <a href="#examples">Ejemplos</a>
+            <a href="#playground">Playground</a>
+            <a href="#api">API</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="wrap">
+        <h1>RangeSelector</h1>
+        <p class="lead">Selector de rango de fechas con dos campos, Desde y Hasta, y un calendario.</p>
+        <div class="hero-demo">
+            <span class="lbl" id="hero-lbl">Período</span>
+            <div id="hero-rs" aria-labelledby="hero-lbl"></div>
+            <div class="value" data-value-for="hero-rs"></div>
+        </div>
+    </div>
+</header>
+
+<section id="features">
+    <div class="wrap">
+        <h2>Características</h2>
+        <ul class="feat">
+            <li><b>Dos campos con máscara.</b> Cada fecha se tipea en formato <code>dd/mm/aaaa</code> con la guía <code>__/__/____</code>. Al completar Desde, el cursor pasa a Hasta.</li>
+            <li><b>Dos formas de usar el calendario.</b> Click en un campo abre el calendario de esa fecha. El botón 📅 abre el calendario de rango: primero Desde, después Hasta.</li>
+            <li><b>Rangos abiertos.</b> Se puede elegir sólo Desde o sólo Hasta. El lado vacío muestra «Sin límite» y se envía vacío.</li>
+            <li><b>Texto para el rango vacío.</b> Sin fechas, el control muestra qué significa: «Todas las fechas», «Este mes», etc.</li>
+            <li><b>Validación.</b> Fechas inexistentes o fuera de <code>min</code>/<code>max</code> se marcan en rojo y bloquean el envío del form. Si Desde es posterior a Hasta, se invierten.</li>
+            <li><b>Teclado y accesibilidad.</b> Se puede usar sin mouse, y tiene roles y etiquetas ARIA.</li>
+        </ul>
+    </div>
+</section>
+
+<section id="guia">
+    <div class="wrap">
+        <h2>Guía de uso</h2>
+        <div class="steps">
+
+            <div class="step">
+                <div class="txt">
+                    <h3>Incluí los archivos</h3>
+                    <p>El CSS y el JS. No hay dependencias.</p>
+                </div>
+                <div class="code"><textarea hidden data-lang="html"><link rel="stylesheet" href="range-selector.css">
+<script src="range-selector.js"></script></textarea></div>
+            </div>
+
+            <div class="step">
+                <div class="txt">
+                    <h3>Agregá el control</h3>
+                    <p>Un <code>div</code> con <code>data-range-selector</code> dentro de tu form. Se inicializa solo.</p>
+                </div>
+                <div class="code"><textarea hidden data-lang="html"><form method="get">
+  <div data-range-selector></div>
+</form></textarea></div>
+            </div>
+
+            <div class="step">
+                <div class="txt">
+                    <h3>Leé las fechas</h3>
+                    <p>El form envía <code>desde</code> y <code>hasta</code> en formato <code>AAAA-MM-DD</code>. Cualquiera de las dos puede venir vacía.</p>
+                </div>
+                <div class="code"><textarea hidden data-lang="html">?desde=2026-10-01&hasta=2026-10-31</textarea></div>
+            </div>
+
+            <div class="step">
+                <div class="txt">
+                    <h3>Opciones</h3>
+                    <p>Valores iniciales, límites y el texto para cuando no hay fechas. El resto está en <a href="#api">API</a>.</p>
+                </div>
+                <div class="code"><textarea hidden data-lang="html"><div data-range-selector
+     data-desde="2026-10-01"
+     data-hasta="2026-10-31"
+     data-min="2026-01-01"
+     data-vacio="Este mes"></div></textarea></div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section id="examples">
+    <div class="wrap">
+        <h2>Ejemplos</h2>
+        <p class="intro">Debajo de cada ejemplo se ve el valor que se enviaría.</p>
+
+        <div class="example">
+            <div class="live">
+                <h3>Básico, con data-attributes</h3>
+                <p class="desc">Se inicializa solo. Viajan dos hidden: <code>desde</code> y <code>hasta</code> en ISO.</p>
+                <span class="lbl" id="l-ex1">Fecha</span>
+                <div id="ex1" data-range-selector aria-labelledby="l-ex1"></div>
+                <div class="value" data-value-for="ex1"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="html"><link rel="stylesheet" href="range-selector.css">
+
+<span id="lbl">Fecha</span>
+<div data-range-selector aria-labelledby="lbl"></div>
+
+<script src="range-selector.js"></script></textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
+                <h3>Por JS, con límites y valor inicial</h3>
+                <p class="desc">Un año atrás → hoy. Afuera, los días se deshabilitan y lo tipeado es error. Vacío significa «Este mes».</p>
+                <span class="lbl" id="l-ex2">Período</span>
+                <div id="ex2" aria-labelledby="l-ex2"></div>
+                <div class="value" data-value-for="ex2"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="js">const hoy = new Date();
+
+new RangeSelector('#periodo', {
+  min: new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate()),
+  max: hoy,
+  desde: new Date(hoy.getFullYear(), hoy.getMonth(), 1),
+  hasta: hoy,
+  vacio: 'Este mes',
+});</textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
+                <h3>Rango abierto</h3>
+                <p class="desc">Sólo Desde: «desde el 1/10 en adelante». El lado vacío dice «Sin límite» y viaja vacío.</p>
+                <span class="lbl" id="l-ex3">Alta</span>
+                <div id="ex3" data-range-selector data-desde="2026-10-01" aria-labelledby="l-ex3"></div>
+                <div class="value" data-value-for="ex3"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="html"><div data-range-selector
+     data-desde="2026-10-01"></div></textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
+                <h3>Atajos propios</h3>
+                <p class="desc">Los atajos son configurables: acá, trimestres del año.</p>
+                <span class="lbl" id="l-ex4">Trimestre</span>
+                <div id="ex4" aria-labelledby="l-ex4"></div>
+                <div class="value" data-value-for="ex4"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="js">const y = new Date().getFullYear();
+
+new RangeSelector('#trimestre', {
+  presets: [
+    { label: '1er trimestre', desde: `${y}-01-01`, hasta: `${y}-03-31` },
+    { label: '2do trimestre', desde: `${y}-04-01`, hasta: `${y}-06-30` },
+    { label: '3er trimestre', desde: `${y}-07-01`, hasta: `${y}-09-30` },
+    { label: '4to trimestre', desde: `${y}-10-01`, hasta: `${y}-12-31` },
+  ],
+});</textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
+                <h3>Compacto y con otro tema</h3>
+                <p class="desc">Sin atajos, un solo mes y colores propios pisando las variables CSS. En un contenedor angosto la etiqueta pasa arriba de la fecha.</p>
+                <span class="lbl" id="l-ex5">Vencimiento</span>
+                <div class="tema-verde" style="max-width: 20rem">
+                    <div id="ex5" data-range-selector data-presets="false" data-months="1"
+                         data-vacio="Cualquier vencimiento" aria-labelledby="l-ex5"></div>
+                </div>
+                <div class="value" data-value-for="ex5"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="html"><style>
+  .tema-verde .rs {
+    --rs-accent: #059669;
+    --rs-accent-dark: #047857;
+    --rs-accent-soft: #ecfdf5;
+    --rs-accent-text: #047857;
+  }
+</style>
+
+<div class="tema-verde">
+  <div data-range-selector
+       data-presets="false"
+       data-months="1"
+       data-vacio="Cualquier vencimiento"></div>
+</div></textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
+                <h3>En un form</h3>
+                <p class="desc">Una fecha inválida (probá <code>31022026</code>) frena el submit y enfoca el campo. Los hidden viajan con el form.</p>
+                <form id="ex6-form">
+                    <span class="lbl" id="l-ex6">Emisión</span>
+                    <div id="ex6" data-range-selector data-name-desde="emision_desde"
+                         data-name-hasta="emision_hasta" aria-labelledby="l-ex6"></div>
+                </form>
+                <div class="value" id="ex6-out">Enter en un campo envía el form.</div>
+            </div>
+            <div class="code"><textarea hidden data-lang="html"><form method="get">
+  <div data-range-selector
+       data-name-desde="emision_desde"
+       data-name-hasta="emision_hasta"></div>
+</form>
+
+<!-- ?emision_desde=2026-10-01&emision_hasta=2026-10-31 --></textarea></div>
+        </div>
+    </div>
+</section>
+
+<section id="playground">
+    <div class="wrap">
+        <h2>Playground</h2>
+        <p class="intro">Cambiá las opciones y el tema para ver el resultado. Abajo se registran los eventos.</p>
+        <div class="play">
+            <div class="panel">
+                <h3>Opciones</h3>
+                <label class="opt">Atajos <span class="sw"><input type="checkbox" id="p-presets" checked><span></span></span></label>
+                <label class="opt">Dos meses <span class="sw"><input type="checkbox" id="p-months" checked><span></span></span></label>
+                <label class="opt">Saltar a Hasta <span class="sw"><input type="checkbox" id="p-advance" checked><span></span></span></label>
+                <label class="opt">Vacío <input type="text" id="p-vacio" value="Todas las fechas"></label>
+                <label class="opt">Lado vacío <input type="text" id="p-sinlimite" value="Sin límite"></label>
+                <label class="opt">Mínimo <input type="date" id="p-min"></label>
+                <label class="opt">Máximo <input type="date" id="p-max"></label>
+                <h3 style="margin-top:1.25rem">Tema</h3>
+                <label class="opt">Acento <input type="color" id="p-accent" value="#3b82f6"></label>
+                <label class="opt">Alto
+                    <select id="p-height">
+                        <option value="2.25rem">Chico</option>
+                        <option value="2.75rem" selected>Normal</option>
+                        <option value="3.25rem">Grande</option>
+                    </select>
+                </label>
+                <label class="opt">Bordes
+                    <select id="p-radius">
+                        <option value="0">Rectos</option>
+                        <option value=".5rem" selected>Suaves</option>
+                        <option value="1.375rem">Píldora</option>
+                    </select>
+                </label>
+            </div>
+            <div class="stage">
+                <div class="stage-box">
+                    <span class="lbl" id="l-play">Período</span>
+                    <div id="play" aria-labelledby="l-play"></div>
+                    <div class="api" id="api">
+                        <button type="button" data-api="getValue">getValue()</button>
+                        <button type="button" data-api="mes">setValue(1°, último del mes)</button>
+                        <button type="button" data-api="abierto">setValue(hoy, null)</button>
+                        <button type="button" data-api="clear">clear()</button>
+                        <button type="button" data-api="open">open('hasta')</button>
+                        <button type="button" data-api="validate">validate()</button>
+                    </div>
+                </div>
+                <div class="log" id="log"><span class="t">// eventos y llamadas</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="api">
+    <div class="wrap">
+        <h2>API</h2>
+        <p class="intro">Todo lo configurable por JS también va por <code>data-*</code>. Las fechas entran como <code>'AAAA-MM-DD'</code> o <code>Date</code> y salen en ISO.</p>
+        <table>
+            <thead><tr><th>Opción</th><th>data-attribute</th><th>Default</th><th></th></tr></thead>
+            <tbody>
+                <tr><td><code>nameDesde</code> / <code>nameHasta</code></td><td><code>data-name-desde</code> / <code>-hasta</code></td><td><code>'desde'</code> / <code>'hasta'</code></td><td><code>name</code> de los hidden que viajan</td></tr>
+                <tr><td><code>desde</code> / <code>hasta</code></td><td><code>data-desde</code> / <code>data-hasta</code></td><td><code>null</code></td><td>Valor inicial</td></tr>
+                <tr><td><code>min</code> / <code>max</code></td><td><code>data-min</code> / <code>data-max</code></td><td><code>null</code></td><td>Límites</td></tr>
+                <tr><td><code>vacio</code></td><td><code>data-vacio</code></td><td><code>'Todas las fechas'</code></td><td>Qué significa no elegir rango</td></tr>
+                <tr><td><code>sinLimite</code></td><td><code>data-sin-limite</code></td><td><code>'Sin límite'</code></td><td>Lado vacío de un rango abierto</td></tr>
+                <tr><td><code>presets</code></td><td><code>data-presets="false"</code></td><td><code>true</code></td><td><code>true</code>, <code>false</code> o <code>[{label, desde, hasta}]</code></td></tr>
+                <tr><td><code>months</code></td><td><code>data-months</code></td><td><code>2</code></td><td>Meses visibles (en mobile, 1)</td></tr>
+                <tr><td><code>autoAdvance</code></td><td><code>data-auto-advance="false"</code></td><td><code>true</code></td><td>Desde completo → Hasta</td></tr>
+                <tr><td><code>onChange</code></td><td>—</td><td><code>null</code></td><td><code>fn({desde, hasta})</code></td></tr>
+                <tr><td><code>locale</code></td><td>—</td><td>español</td><td>Textos, meses y días</td></tr>
+            </tbody>
+        </table>
+        <div class="two" style="margin-top:1.25rem">
+            <table>
+                <thead><tr><th>Método</th><th></th></tr></thead>
+                <tbody>
+                    <tr><td><code>getValue()</code></td><td><code>{desde, hasta}</code> en ISO</td></tr>
+                    <tr><td><code>setValue(d, h)</code></td><td>ISO, <code>Date</code> o <code>null</code></td></tr>
+                    <tr><td><code>clear()</code></td><td>Vacía el rango</td></tr>
+                    <tr><td><code>setLimits(min, max)</code></td><td>Cambia los límites</td></tr>
+                    <tr><td><code>validate()</code></td><td><code>false</code> si hay errores</td></tr>
+                    <tr><td><code>open(campo?, modo?)</code> / <code>close()</code></td><td>Panel; <code>modo</code>: <code>'rango'</code> o <code>'campo'</code></td></tr>
+                    <tr><td><code>destroy()</code></td><td>Saca listeners y markup</td></tr>
+                    <tr><td><code>RangeSelector.init(scope?)</code></td><td>Inicializa <code>[data-range-selector]</code></td></tr>
+                </tbody>
+            </table>
+            <table>
+                <thead><tr><th>Teclado</th><th></th></tr></thead>
+                <tbody>
+                    <tr><td>dígitos</td><td>Máscara; Desde completo → Hasta</td></tr>
+                    <tr><td><kbd>↓</kbd></td><td>Abre el calendario de ese campo</td></tr>
+                    <tr><td><kbd>⌫</kbd> en Hasta vacío</td><td>Vuelve a Desde</td></tr>
+                    <tr><td><kbd>←</kbd> <kbd>→</kbd> en los bordes</td><td>Pasa de un campo al otro</td></tr>
+                    <tr><td>flechas · <kbd>Inicio</kbd> <kbd>Fin</kbd></td><td>Calendario: día / semana</td></tr>
+                    <tr><td><kbd>RePág</kbd> <kbd>AvPág</kbd></td><td>Mes anterior / siguiente</td></tr>
+                    <tr><td><kbd>Enter</kbd> · <kbd>Esc</kbd></td><td>Elige el día · cierra</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="intro" style="margin:1.25rem 0 0">Evento <code>rangeselector:change</code> (burbujea) con <code>event.detail = {desde, hasta}</code> cada vez que cambia el valor.</p>
+    </div>
+</section>
+
+<footer>RangeSelector · demo local · <code>npm test</code> para los tests</footer>
+
+<script src="src/range-selector.js"></script>
+<script>
+(function () {
+    var hoy = new Date(); hoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    var y = hoy.getFullYear();
+
+    /* ---------- Instancias de los ejemplos ---------- */
+    new RangeSelector('#hero-rs', { desde: new Date(y, hoy.getMonth(), 1), hasta: hoy });
+    new RangeSelector('#ex2', {
+        min: new Date(y - 1, hoy.getMonth(), hoy.getDate()), max: hoy,
+        desde: new Date(y, hoy.getMonth(), 1), hasta: hoy, vacio: 'Este mes',
+    });
+    new RangeSelector('#ex4', {
+        presets: [
+            { label: '1er trimestre', desde: y + '-01-01', hasta: y + '-03-31' },
+            { label: '2do trimestre', desde: y + '-04-01', hasta: y + '-06-30' },
+            { label: '3er trimestre', desde: y + '-07-01', hasta: y + '-09-30' },
+            { label: '4to trimestre', desde: y + '-10-01', hasta: y + '-12-31' },
+        ],
+    });
+
+    // Valor en vivo debajo de cada ejemplo.
+    function fmt(v) {
+        return '<span>desde:</span> <b>' + (v.desde || '—') + '</b> &nbsp; <span>hasta:</span> <b>' + (v.hasta || '—') + '</b>';
+    }
+    document.querySelectorAll('[data-value-for]').forEach(function (out) {
+        var el = document.getElementById(out.getAttribute('data-value-for'));
+        var show = function () { out.innerHTML = fmt(el.rangeSelector.getValue()); };
+        el.addEventListener('rangeselector:change', show);
+        show();
+    });
+
+    // Form del ejemplo 6: mostrar la querystring en vez de navegar.
+    document.getElementById('ex6-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var p = new URLSearchParams();
+        new FormData(e.target).forEach(function (v, k) { if (v !== '') p.append(k, v); });
+        document.getElementById('ex6-out').textContent = p.toString() ? '?' + p : '(sin fechas)';
+    });
+
+    /* ---------- Bloques de código: resaltado mínimo + copiar ---------- */
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    /* Cada muestra de código vive en un textarea oculto: su contenido es texto
+       crudo, así que puede llevar etiquetas script sin cortar la página. */
+    document.querySelectorAll('.code > textarea[data-lang]').forEach(function (src) {
+        var text = src.value.replace(/^\n/, '');
+        var box = src.parentNode;
+        var pre = document.createElement('pre');
+        pre.innerHTML = '<code>' + esc(text) + '</code>';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'copy';
+        btn.textContent = 'Copiar';
+        btn.addEventListener('click', function () {
+            (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
+                btn.textContent = 'Copiado';
+            }, function () { btn.textContent = 'Seleccioná y copiá'; });
+            setTimeout(function () { btn.textContent = 'Copiar'; }, 1400);
+        });
+        box.appendChild(pre);
+        box.appendChild(btn);
+    });
+
+    /* ---------- Playground ---------- */
+    var host = document.getElementById('play');
+    var logEl = document.getElementById('log');
+    var play = null;
+    var $ = function (id) { return document.getElementById(id); };
+
+    function log(kind, msg) {
+        var t = new Date().toTimeString().slice(0, 8);
+        logEl.insertAdjacentHTML('beforeend', '\n<span class="t">' + t + '</span> <span class="e">' + kind + '</span> <span class="v">' + esc(msg) + '</span>');
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function build() {
+        var value = play ? play.getValue() : { desde: null, hasta: null };
+        if (play) play.destroy();
+        play = new RangeSelector(host, {
+            presets: $('p-presets').checked,
+            months: $('p-months').checked ? 2 : 1,
+            autoAdvance: $('p-advance').checked,
+            vacio: $('p-vacio').value || 'Todas las fechas',
+            sinLimite: $('p-sinlimite').value || 'Sin límite',
+            min: $('p-min').value || null,
+            max: $('p-max').value || null,
+            desde: value.desde || null,
+            hasta: value.hasta || null,
+            onChange: function (v) { log('change', JSON.stringify(v)); },
+        });
+        theme();
+    }
+    function theme() {
+        var s = host.style;
+        var c = $('p-accent').value;
+        s.setProperty('--rs-accent', c);
+        s.setProperty('--rs-accent-dark', c);
+        s.setProperty('--rs-accent-text', c);
+        s.setProperty('--rs-accent-soft', c + '1a');
+        s.setProperty('--rs-height', $('p-height').value);
+        s.setProperty('--rs-radius', $('p-radius').value);
+    }
+    ['p-presets', 'p-months', 'p-advance', 'p-min', 'p-max'].forEach(function (id) {
+        $(id).addEventListener('change', function () { build(); log('opción', id.slice(2) + ' → ' + ($(id).type === 'checkbox' ? $(id).checked : ($(id).value || 'null'))); });
+    });
+    ['p-vacio', 'p-sinlimite'].forEach(function (id) {
+        var timer;
+        $(id).addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(build, 250); });
+    });
+    ['p-accent', 'p-height', 'p-radius'].forEach(function (id) { $(id).addEventListener('input', theme); });
+
+    $('api').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-api]');
+        if (!b) return;
+        switch (b.dataset.api) {
+            case 'getValue': log('getValue()', JSON.stringify(play.getValue())); break;
+            case 'mes': play.setValue(new Date(y, hoy.getMonth(), 1), new Date(y, hoy.getMonth() + 1, 0)); log('setValue', 'mes en curso'); break;
+            case 'abierto': play.setValue(hoy, null); log('setValue', 'hoy → sin límite'); break;
+            case 'clear': play.clear(); log('clear()', ''); break;
+            case 'open': play.open('hasta'); log('open', "'hasta'"); break;
+            case 'validate': log('validate()', String(play.validate())); break;
+        }
+    });
+    build();
+})();
+</script>
+</body>
+</html>

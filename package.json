@@ -1,0 +1,14 @@
+{
+  "name": "range-selector",
+  "version": "0.1.0",
+  "description": "Selector de rango de fechas «Desde → Hasta»: dos inputs con máscara y un calendario, sin dependencias.",
+  "main": "src/range-selector.js",
+  "style": "src/range-selector.css",
+  "files": ["src"],
+  "scripts": {
+    "test": "node --test",
+    "demo": "python3 -m http.server 8090"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

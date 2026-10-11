@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>RangeSelector — tests en el browser</title>
+<link rel="stylesheet" href="../src/range-selector.css">
+</head>
+<body>
+<!--
+  Pruebas de interacción en un browser real. Abrir el archivo y mirar el resultado,
+  o headless:  "Google Chrome" --headless=new --dump-dom file://…/test/browser.html
+-->
+<form id="f"><div id="rs"></div><button type="submit">ok</button></form>
+<pre id="results">corriendo…</pre>
+<script src="../src/range-selector.js"></script>
+<script>
+(function () {
+    var out = [], fails = 0;
+    function check(name, cond, extra) {
+        if (!cond) fails++;
+        out.push((cond ? 'PASS ' : 'FAIL ') + name + (cond || extra === undefined ? '' : '  → ' + JSON.stringify(extra)));
+    }
+    function type(input, text) {
+        input.focus();
+        input.value = '';
+        for (var i = 0; i < text.length; i++) {
+            input.value += text[i];
+            input.setSelectionRange(input.value.length, input.value.length);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+    function blurAll() { document.activeElement && document.activeElement.blur(); }
+
+    var el = document.getElementById('rs');
+    var rs = new RangeSelector(el, { min: '2026-01-01', max: '2026-12-31' });
+    var desde = rs.f.desde.input, hasta = rs.f.hasta.input;
+    var hid = function () { return [rs.hidden.desde.value, rs.hidden.hasta.value]; };
+
+    // Estado inicial
+    check('vacío muestra el texto de vacío', el.classList.contains('rs-is-empty') &&
+        el.querySelector('.rs-vacio').textContent === 'Todas las fechas');
+
+    // Tipear Desde completo: máscara, hidden y salto a Hasta
+    type(desde, '01102026');
+    check('máscara arma dd/mm/aaaa', desde.value === '01/10/2026', desde.value);
+    check('hidden desde en ISO', hid()[0] === '2026-10-01', hid());
+    check('Desde completo salta a Hasta', document.activeElement === hasta);
+
+    // Guía mientras se tipea Hasta
+    type(hasta, '15');
+    check('guía muestra el resto', rs.f.hasta.rest.textContent === '/__/____', rs.f.hasta.rest.textContent);
+    type(hasta, '15102026');
+    blurAll();
+    check('hidden hasta en ISO', hid()[1] === '2026-10-15', hid());
+    check('ya no está vacío', !el.classList.contains('rs-is-empty'));
+
+    // Desde posterior a Hasta: se invierten
+    type(desde, '20102026');
+    blurAll();
+    check('se invierten', hid()[0] === '2026-10-15' && hid()[1] === '2026-10-20', hid());
+
+    // Año corto
+    type(hasta, '311026');
+    blurAll();
+    check('año de 2 dígitos → 20aa', hid()[1] === '2026-10-31' && hasta.value === '31/10/2026', [hid(), hasta.value]);
+
+    // Inválida: error, hidden vacío, submit bloqueado
+    type(desde, '31022026');
+    blurAll();
+    check('31/02 marca error', el.classList.contains('rs-has-error') && rs.hidden.desde.value === '', hid());
+    var ev = new Event('submit', { cancelable: true });
+    document.getElementById('f').dispatchEvent(ev);
+    check('submit bloqueado con error', ev.defaultPrevented);
+
+    // Fuera de límites
+    type(desde, '01012025');
+    blurAll();
+    check('fuera de min es error', /Fuera del rango/.test(rs.errorEl.textContent), rs.errorEl.textContent);
+
+    // Rango abierto: sólo Desde
+    rs.setValue('2026-03-01', null);
+    check('rango abierto vale', hid()[0] === '2026-03-01' && hid()[1] === '', hid());
+    check('lado vacío dice Sin límite', rs.f.hasta.rest.textContent === 'Sin límite', rs.f.hasta.rest.textContent);
+
+    // Calendario: Desde y Hasta por click
+    rs.clear();
+    rs.open('desde');
+    check('panel abierto', rs.isOpen() && el.querySelectorAll('.rs-month').length === 2);
+    check('campo activo marcado', rs.f.desde.field.classList.contains('rs-active'));
+    rs.setValue(null, null);
+    rs.view = new Date(2026, 9, 1); rs._render();
+    var day = function (iso) { return el.querySelector('.rs-day:not(.rs-out)[data-date="' + iso + '"]'); };
+    day('2026-10-05').click();
+    check('click elige Desde y pasa a Hasta', hid()[0] === '2026-10-05' && rs.active === 'hasta' && rs.isOpen(), [hid(), rs.active]);
+    day('2026-10-02').click();
+    check('día anterior a Desde reinicia', hid()[0] === '2026-10-02' && hid()[1] === '' && rs.isOpen(), hid());
+    day('2026-10-09').click();
+    check('click en Hasta completa y cierra', hid()[1] === '2026-10-09' && !rs.isOpen(), hid());
+
+    // Días fuera de límites deshabilitados
+    rs.open('desde');
+    rs.view = new Date(2025, 11, 1); rs._render();
+    var d1 = el.querySelector('.rs-day:not(.rs-out)[data-date="2025-12-31"]');
+    var d2 = el.querySelector('.rs-day:not(.rs-out)[data-date="2026-01-01"]');
+    check('fuera de límites deshabilitado', d1 && d1.disabled && d2 && !d2.disabled);
+
+    // Atajo
+    var mes = Array.prototype.find.call(el.querySelectorAll('.rs-preset'), function (b) { return b.textContent === 'Hoy'; });
+    mes.click();
+    var hoy = RangeSelector.utils.toISO(RangeSelector.utils.today());
+    check('atajo Hoy', hid()[0] === hoy && hid()[1] === hoy && !rs.isOpen(), hid());
+
+    // Botón de vacío
+    rs.open();
+    el.querySelector('[data-rs-clear]').click();
+    check('botón vacío limpia', hid()[0] === '' && hid()[1] === '' && !rs.isOpen(), hid());
+
+    // Evento change
+    var got = null;
+    el.addEventListener('rangeselector:change', function (e) { got = e.detail; });
+    rs.setValue('2026-05-01', '2026-05-31');
+    check('evento rangeselector:change', got && got.desde === '2026-05-01' && got.hasta === '2026-05-31', got);
+
+    // Click en un campo: calendario de esa sola fecha
+    rs.close();
+    rs.setValue('2026-10-05', '2026-10-20');
+    rs.f.hasta.field.click();
+    check('click en Hasta abre el calendario de esa fecha', rs.isOpen() && rs.active === 'hasta' && rs.mode === 'campo' &&
+        rs.f.hasta.field.classList.contains('rs-active'), [rs.isOpen(), rs.active, rs.mode]);
+    var d04 = el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-04"]');
+    check('modo campo: días antes de Desde deshabilitados para Hasta', d04 && d04.disabled);
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-25"]').click();
+    check('elegir un día cambia sólo Hasta y cierra', hid()[0] === '2026-10-05' && hid()[1] === '2026-10-25' && !rs.isOpen(), hid());
+    rs.f.desde.field.click();
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-01"]').click();
+    check('elegir en Desde cambia sólo Desde y cierra', hid()[0] === '2026-10-01' && hid()[1] === '2026-10-25' && !rs.isOpen(), hid());
+    // El botón abre el calendario de rango
+    rs.btn.click();
+    check('el botón abre en modo rango', rs.isOpen() && rs.mode === 'rango', rs.mode);
+    rs.close();
+
+    // Escape cierra
+    rs.open();
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    check('Escape cierra', !rs.isOpen());
+
+    // destroy
+    rs.destroy();
+    check('destroy limpia', el.innerHTML === '' && !el.rangeSelector);
+
+    out.unshift(fails ? fails + ' FALLARON' : 'TODO OK (' + out.length + ')');
+    document.getElementById('results').textContent = out.join('\n');
+})();
+</script>
+</body>
+</html>
