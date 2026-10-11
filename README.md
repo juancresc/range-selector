@@ -1,121 +1,119 @@
 # RangeSelector
 
-Selector de rango de fechas **Desde → Hasta**, sin dependencias.
+The usability-first date picker. A **From → To** date range selector with no dependencies.
 
-```
-┌──────────────────────────────────────────────────┬────┐
-│ DESDE  01/10/2026     →     HASTA  __/__/____    │ 📅 │
-└──────────────────────────────────────────────────┴────┘
-```
+**[Live demo & playground →](https://juancresc.github.io/range-selector/)**
 
-- **Dos inputs tipeables con máscara** (`dd/mm/aaaa`) dentro de un mismo control.
-  La guía `__/__/____` se completa a medida que se tipea; al completar Desde salta
-  solo a Hasta. Año de dos dígitos → `20aa`.
-- **Click en un campo**: abre el calendario de esa fecha. Se elige el día, cambia
-  sólo ese campo y se cierra. Los días que invertirían el rango no se ofrecen.
-  El foco queda en el campo, así que también se puede tipear.
-- **Botón 📅**: abre el calendario de rango. Primero Desde, después Hasta; un día
-  anterior a Desde reinicia el rango ahí.
-- **Rangos abiertos**: sólo Desde o sólo Hasta es válido (el lado vacío dice «Sin límite»).
-- **Vacío con significado**: sin fechas, el control dice qué pasa («Todas las fechas»,
-  «Este mes»…) y el botón izquierdo del panel vuelve a ese estado.
-- Atajos (Hoy, Ayer, Esta semana, Últimos 7/30 días, Este mes, Mes anterior, Año en curso),
-  límites `min`/`max`, validación (31/02, fuera de rango) que bloquea el submit, Desde
-  posterior a Hasta se invierten, teclado completo, ARIA.
-- Viajan dos `<input type="hidden">` con las fechas en ISO (`AAAA-MM-DD`).
+- **Two typeable, masked inputs** (`dd/mm/yyyy`) inside a single control.
+  The `__/__/____` guide fills in as you type; completing From jumps to To
+  automatically. A two-digit year → `20yy`.
+- **Click a field**: opens the calendar for that date. Picking a day changes only
+  that field and closes. Days that would invert the range aren't offered.
+  Focus stays in the field, so you can also type.
+- **📅 button**: opens the range calendar. From first, then To; a day before From
+  restarts the range there.
+- **Open ranges**: only From or only To is valid (the empty side reads «Sin límite», "No limit").
+- **Meaningful empty state**: with no dates, the control says what that means («Todas las fechas»,
+  «Este mes»…) and the panel's left button returns to that state.
+- Presets (Today, Yesterday, This week, Last 7/30 days, This month, Last month, Year to date),
+  `min`/`max` limits, validation (31/02, out of range) that blocks submit, From after To
+  gets swapped, full keyboard support, ARIA.
+- Submits two `<input type="hidden">` with the dates in ISO (`YYYY-MM-DD`).
 
-## Uso
+> The component's default UI texts are in Spanish; override them with the `locale` option.
+
+## Usage
 
 ```html
 <link rel="stylesheet" href="src/range-selector.css">
 
-<span id="lbl">Fecha</span>
+<span id="lbl">Date</span>
 <div data-range-selector
      data-name-desde="desde" data-name-hasta="hasta"
      data-desde="2026-10-01" data-hasta="2026-10-11"
-     data-vacio="Todas las fechas"
+     data-vacio="All dates"
      aria-labelledby="lbl"></div>
 
-<script src="src/range-selector.js"></script>   <!-- auto-inicializa [data-range-selector] -->
+<script src="src/range-selector.js"></script>   <!-- auto-initializes [data-range-selector] -->
 ```
 
-O por JS:
+Or from JS:
 
 ```js
-const rs = new RangeSelector('#periodo', {
+const rs = new RangeSelector('#period', {
     nameDesde: 'desde', nameHasta: 'hasta',
     min: '2025-01-01', max: new Date(),
-    vacio: 'Este mes',
+    vacio: 'This month',
     onChange: ({ desde, hasta }) => console.log(desde, hasta),
 });
 ```
 
-## Opciones
+## Options
 
-| Opción        | data-attribute       | Default              | |
+| Option        | data-attribute       | Default              | |
 |---------------|----------------------|----------------------|---|
-| `nameDesde`   | `data-name-desde`    | `'desde'`            | `name` del hidden de Desde |
-| `nameHasta`   | `data-name-hasta`    | `'hasta'`            | `name` del hidden de Hasta |
-| `desde`       | `data-desde`         | `null`               | Valor inicial (`'AAAA-MM-DD'` o `Date`) |
-| `hasta`       | `data-hasta`         | `null`               | |
-| `min` / `max` | `data-min` / `data-max` | `null`            | Límites; afuera se deshabilita en el calendario y es error al tipear |
-| `vacio`       | `data-vacio`         | `'Todas las fechas'` | Qué significa no elegir rango (texto del control vacío y del botón que lo vacía) |
-| `sinLimite`   | `data-sin-limite`    | `'Sin límite'`       | Lado vacío de un rango abierto |
-| `presets`     | `data-presets="false"` | `true`             | `true`, `false` o `[{ label, desde, hasta }]` |
-| `months`      | `data-months`        | `2`                  | Meses visibles en el calendario (en mobile siempre 1) |
-| `autoAdvance` | `data-auto-advance="false"` | `true`        | Saltar a Hasta al completar Desde |
-| `onChange`    | —                    | `null`               | `fn({ desde, hasta })` en ISO |
-| `locale`      | —                    | español              | Textos y nombres de meses/días (ver `RangeSelector.locale`) |
+| `nameDesde`   | `data-name-desde`    | `'desde'`            | `name` of the From hidden input |
+| `nameHasta`   | `data-name-hasta`    | `'hasta'`            | `name` of the To hidden input |
+| `desde`       | `data-desde`         | `null`               | Initial From value (`'YYYY-MM-DD'` or `Date`) |
+| `hasta`       | `data-hasta`         | `null`               | Initial To value |
+| `min` / `max` | `data-min` / `data-max` | `null`            | Limits; outside them, days are disabled in the calendar and typing them is an error |
+| `vacio`       | `data-vacio`         | `'Todas las fechas'` | What choosing no range means (text of the empty control and of the button that clears it) |
+| `sinLimite`   | `data-sin-limite`    | `'Sin límite'`       | Empty side of an open range |
+| `presets`     | `data-presets="false"` | `true`             | `true`, `false` or `[{ label, desde, hasta }]` |
+| `months`      | `data-months`        | `2`                  | Months visible in the calendar (always 1 on mobile) |
+| `autoAdvance` | `data-auto-advance="false"` | `true`        | Jump to To when From is complete |
+| `onChange`    | —                    | `null`               | `fn({ desde, hasta })` in ISO |
+| `locale`      | —                    | Spanish              | Texts and month/day names (see `RangeSelector.locale`) |
 
-## Métodos
+## Methods
 
 | | |
 |---|---|
-| `getValue()` | `{ desde: 'AAAA-MM-DD' \| '', hasta: … }` |
-| `setValue(desde, hasta)` | ISO, `Date` o `null` |
-| `clear()` | Vacía el rango |
-| `setLimits(min, max)` | Cambia los límites (revalida lo tipeado) |
-| `validate()` | Interpreta lo tipeado; `false` si hay errores |
+| `getValue()` | `{ desde: 'YYYY-MM-DD' \| '', hasta: … }` |
+| `setValue(desde, hasta)` | ISO, `Date` or `null` |
+| `clear()` | Clears the range |
+| `setLimits(min, max)` | Changes the limits (revalidates typed input) |
+| `validate()` | Parses typed input; `false` if there are errors |
 | `open(campo?, modo?)` / `close()` / `isOpen()` | Panel; `campo` = `'desde'` \| `'hasta'`, `modo` = `'rango'` (default) \| `'campo'` |
-| `destroy()` | Saca listeners y markup |
-| `RangeSelector.init(scope?)` | Inicializa los `[data-range-selector]` de `scope` (lo hace solo al cargar) |
-| `RangeSelector.utils` | Funciones puras: `parse`, `mask`, `toISO`, `toDMY`, `fromISO`, `pick`… |
+| `destroy()` | Removes listeners and markup |
+| `RangeSelector.init(scope?)` | Initializes the `[data-range-selector]` elements in `scope` (runs automatically on load) |
+| `RangeSelector.utils` | Pure functions: `parse`, `mask`, `toISO`, `toDMY`, `fromISO`, `pick`… |
 
-## Eventos
+## Events
 
-- `rangeselector:change` (burbujea) — `event.detail = { desde, hasta }` en ISO, cada vez
-  que cambian los hidden.
-- Dentro de un `<form>`: en el `submit` interpreta lo tipeado y, si hay una fecha inválida,
-  cancela el envío y enfoca el campo. En el `reset` vuelve al valor inicial.
+- `rangeselector:change` (bubbles) — `event.detail = { desde, hasta }` in ISO, every time
+  the hidden inputs change.
+- Inside a `<form>`: on `submit` it parses typed input and, if a date is invalid,
+  cancels the submit and focuses the field. On `reset` it returns to the initial value.
 
-## Teclado
+## Keyboard
 
-| Dónde | Tecla | |
+| Where | Key | |
 |---|---|---|
-| Campos | dígitos | Máscara `dd/mm/aaaa`; Desde completo → Hasta |
-| | <kbd>↓</kbd> | Abre el calendario de ese campo (o entra en él si ya está abierto) |
-| | <kbd>⌫</kbd> en Hasta vacío | Vuelve a Desde |
-| | <kbd>←</kbd> / <kbd>→</kbd> en los bordes | Pasa de un campo al otro |
-| Calendario | flechas, <kbd>Inicio</kbd>/<kbd>Fin</kbd> | Día / semana |
-| | <kbd>RePág</kbd>/<kbd>AvPág</kbd> | Mes |
-| | <kbd>Enter</kbd> / <kbd>Espacio</kbd> | Elige el día |
-| | <kbd>Esc</kbd> | Cierra |
+| Fields | digits | `dd/mm/yyyy` mask; From complete → To |
+| | <kbd>↓</kbd> | Opens that field's calendar (or moves into it if already open) |
+| | <kbd>⌫</kbd> in empty To | Back to From |
+| | <kbd>←</kbd> / <kbd>→</kbd> at the edges | Moves between fields |
+| Calendar | arrows, <kbd>Home</kbd>/<kbd>End</kbd> | Day / week |
+| | <kbd>PgUp</kbd>/<kbd>PgDn</kbd> | Month |
+| | <kbd>Enter</kbd> / <kbd>Space</kbd> | Picks the day |
+| | <kbd>Esc</kbd> | Closes |
 
-## Tema
+## Theming
 
-Todo color sale de variables CSS en `.rs`; alcanza con pisarlas:
+Every color comes from CSS variables on `.rs`; just override them:
 
 ```css
-.mi-pantalla .rs {
+.my-screen .rs {
     --rs-accent: #059669; --rs-accent-dark: #047857;
     --rs-accent-soft: #ecfdf5; --rs-accent-text: #047857;
     --rs-height: 2.5rem; --rs-radius: .375rem;
 }
 ```
 
-## Desarrollo
+## Development
 
 ```bash
-npm test        # node --test: parseo, máscara, rangos, atajos (lógica pura)
+npm test        # node --test: parsing, mask, ranges, presets (pure logic)
 npm run demo    # http://localhost:8090 → index.html
 ```

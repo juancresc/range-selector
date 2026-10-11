@@ -48,11 +48,12 @@
     color: var(--rs-muted); user-select: none;
 }
 .rs-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; height: 100%; }
-.rs-input {
-    width: 100%; height: 100%; padding: 0; border: 0; outline: none; background: transparent;
+/* `.rs input.rs-input` y no `.rs-input` a secas: tiene que ganarle a los estilos
+   globales de inputs de la página (`input[type="text"] { border; padding; height }`). */
+.rs input.rs-input, .rs input.rs-input:focus {
+    width: 100%; max-width: none; height: 100%; min-height: 0; padding: 0; margin: 0;
+    border: 0; border-radius: 0; outline: none; background: transparent; box-shadow: none;
     font: inherit; font-variant-numeric: tabular-nums; color: var(--rs-text);
-    /* Pisa estilos globales de inputs (height/border con !important de algunos backoffice). */
-    box-shadow: none !important; min-height: 0 !important;
 }
 .rs-ghost {
     position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden;
