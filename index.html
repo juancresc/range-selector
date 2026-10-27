@@ -397,6 +397,17 @@ new RangeSelector('#quarter', {
 
         <div class="example">
             <div class="live">
+                <h3>With time, starting empty</h3>
+                <p class="desc">The same control with no initial value. Type <code>011020260830</code>, or open the calendar, pick two days and set their times.</p>
+                <span class="lbl" id="l-ex9">Logged</span>
+                <div id="ex9" data-range-selector data-time="true" aria-labelledby="l-ex9"></div>
+                <div class="value" data-value-for="ex9"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="html"><div data-range-selector data-time="true"></div></textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
                 <h3>Time only</h3>
                 <p class="desc"><code>time: 'only'</code>: a range of hours. The button opens the time list: From first, then To. Empty means “all day”.</p>
                 <span class="lbl" id="l-ex8">Opening hours</span>

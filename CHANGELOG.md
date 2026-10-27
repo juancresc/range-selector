@@ -29,6 +29,8 @@ All notable changes to this project are documented here. The format follows
 - The panel shifts left when it would overflow the right edge of the window.
 
 ### Fixed
+- The calendar's hover preview only worked while picking To; picking From now previews
+  the range too, and the end about to be replaced keeps a ring (`.rs-current`).
 - A `step` or `months` of 0 or a non-number could hang the page; invalid values now
   fall back to the defaults.
 - Options passed as `undefined` overwrote their defaults.
