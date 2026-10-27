@@ -48,13 +48,13 @@
         border-radius: 1rem; padding: 1.25rem; 
     }
 
-    /* Secciones */
+    /* Sections */
     section { padding: 3.5rem 0; border-top: 1px solid var(--line); }
     section h2 { font-size: 1.625rem; letter-spacing: -.02em; margin: 0 0 .5rem; }
     section p.intro { color: var(--muted); margin: 0 0 2rem; max-width: 44rem; }
 
 
-    /* Ejemplo: demo en vivo + código */
+    /* Example: live demo + code */
     .example {
         display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #fff;
         border: 1px solid var(--line); border-radius: .875rem; margin-bottom: 1.25rem; overflow: visible;
@@ -79,7 +79,7 @@
         border-radius: .4rem; padding: .35rem .6rem; cursor: pointer;
     }
     .copy:hover { background: rgba(255,255,255,.16); color: #fff; }
-    /* Resaltado mínimo */
+    /* Minimal highlighting */
     .tk-tag { color: #93c5fd; } .tk-attr { color: #c4b5fd; } .tk-str { color: #86efac; }
     .tk-com { color: #64748b; font-style: italic; } .tk-key { color: #f9a8d4; }
 
@@ -117,7 +117,7 @@
     }
     .api button:hover { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
 
-    /* Tablas */
+    /* Tables */
     table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: .875rem; overflow: hidden; font-size: .875rem; }
     th, td { text-align: left; padding: .65rem .9rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
     th { background: #f8fafc; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
@@ -126,7 +126,7 @@
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
     @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
 
-    /* Guía */
+    /* Guide */
     .steps { counter-reset: paso; display: grid; gap: 1.25rem; }
     .step {
         display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #fff;
@@ -146,7 +146,7 @@
     @media (max-width: 860px) { .step .code { border-radius: 0 0 .875rem .875rem; } }
 
 
-    /* --- Versión simple: menos cajas, código claro --- */
+    /* --- Simple version: fewer boxes, clear code --- */
     nav.top { position: static; background: #fff; backdrop-filter: none; }
     .hero { text-align: left; padding: 2.5rem 0 2rem; }
     .hero p.lead { margin: 0 0 1.25rem; }
@@ -223,6 +223,7 @@
             <li><b>Open ranges.</b> You can pick only From or only To. The empty side reads “No limit” and is submitted empty.</li>
             <li><b>Meaningful empty state.</b> With no dates, the control says what that means: “All dates”, “This month”, etc.</li>
             <li><b>Validation.</b> Non-existent dates or dates outside <code>min</code>/<code>max</code> are marked red and block form submission. If From is after To, they are swapped.</li>
+            <li><b>Optional time.</b> <code>time: true</code> adds an optional <code>hh:mm</code> to each date (no time means the whole day); <code>time: 'only'</code> is a range of hours, with no calendar.</li>
             <li><b>Keyboard and accessibility.</b> Fully usable without a mouse, with ARIA roles and labels.</li>
         </ul>
     </div>
@@ -378,6 +379,43 @@ new RangeSelector('#quarter', {
 
         <div class="example">
             <div class="live">
+                <h3>With time</h3>
+                <p class="desc"><code>time: true</code>: the time is optional. Typing only the date means the whole day (From 00:00, To 23:59). Pick the days, then adjust each end's time in the list next to the calendar.</p>
+                <span class="lbl" id="l-ex7">Logged</span>
+                <div id="ex7" data-range-selector data-time="true" data-step="15"
+                     data-desde="2026-10-01T08:00" data-hasta="2026-10-11T18:30" aria-labelledby="l-ex7"></div>
+                <div class="value" data-value-for="ex7"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="html"><div data-range-selector
+     data-time="true"
+     data-step="15"
+     data-desde="2026-10-01T08:00"
+     data-hasta="2026-10-11T18:30"></div>
+
+<!-- ?desde=2026-10-01T08:00&hasta=2026-10-11T18:30 --></textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
+                <h3>Time only</h3>
+                <p class="desc"><code>time: 'only'</code>: a range of hours. The button opens the time list: From first, then To. Empty means “all day”.</p>
+                <span class="lbl" id="l-ex8">Opening hours</span>
+                <div id="ex8" aria-labelledby="l-ex8"></div>
+                <div class="value" data-value-for="ex8"></div>
+            </div>
+            <div class="code"><textarea hidden data-lang="js">new RangeSelector('#hours', {
+  time: 'only',
+  step: 30,
+  desde: '09:00',
+  hasta: '18:00',
+  min: '07:00',
+  max: '22:00',
+});
+// → { desde: '09:00', hasta: '18:00' }</textarea></div>
+        </div>
+
+        <div class="example">
+            <div class="live">
                 <h3>In a form</h3>
                 <p class="desc">An invalid date (try <code>31022026</code>) stops the submit and focuses the field. The hidden inputs are submitted with the form.</p>
                 <form id="ex6-form">
@@ -408,6 +446,20 @@ new RangeSelector('#quarter', {
                 <label class="opt">Presets <span class="sw"><input type="checkbox" id="p-presets" checked><span></span></span></label>
                 <label class="opt">Two months <span class="sw"><input type="checkbox" id="p-months" checked><span></span></span></label>
                 <label class="opt">Jump to To <span class="sw"><input type="checkbox" id="p-advance" checked><span></span></span></label>
+                <label class="opt">Time
+                    <select id="p-time">
+                        <option value="false" selected>Date only</option>
+                        <option value="true">Date + time</option>
+                        <option value="only">Time only</option>
+                    </select>
+                </label>
+                <label class="opt">Time step
+                    <select id="p-step">
+                        <option value="15">15 min</option>
+                        <option value="30" selected>30 min</option>
+                        <option value="60">1 hour</option>
+                    </select>
+                </label>
                 <label class="opt">Empty <input type="text" id="p-vacio" value="Todas las fechas"></label>
                 <label class="opt">Empty side <input type="text" id="p-sinlimite" value="Sin límite"></label>
                 <label class="opt">Minimum <input type="date" id="p-min"></label>
@@ -451,27 +503,29 @@ new RangeSelector('#quarter', {
 <section id="api">
     <div class="wrap">
         <h2>API</h2>
-        <p class="intro">Everything configurable from JS can also be set via <code>data-*</code>. Dates go in as <code>'YYYY-MM-DD'</code> or <code>Date</code> and come out as ISO.</p>
+        <p class="intro">Everything configurable from JS can also be set via <code>data-*</code>. Dates go in as <code>'YYYY-MM-DD'</code> or <code>Date</code> and come out as ISO. Options have English aliases: <code>from</code>/<code>to</code>, <code>nameFrom</code>/<code>nameTo</code>, <code>empty</code>, <code>noLimit</code>.</p>
         <table>
             <thead><tr><th>Option</th><th>data-attribute</th><th>Default</th><th></th></tr></thead>
             <tbody>
                 <tr><td><code>nameDesde</code> / <code>nameHasta</code></td><td><code>data-name-desde</code> / <code>-hasta</code></td><td><code>'desde'</code> / <code>'hasta'</code></td><td><code>name</code> of the submitted hidden inputs</td></tr>
                 <tr><td><code>desde</code> / <code>hasta</code></td><td><code>data-desde</code> / <code>data-hasta</code></td><td><code>null</code></td><td>Initial value</td></tr>
                 <tr><td><code>min</code> / <code>max</code></td><td><code>data-min</code> / <code>data-max</code></td><td><code>null</code></td><td>Limits</td></tr>
-                <tr><td><code>vacio</code></td><td><code>data-vacio</code></td><td><code>'Todas las fechas'</code></td><td>What choosing no range means</td></tr>
-                <tr><td><code>sinLimite</code></td><td><code>data-sin-limite</code></td><td><code>'Sin límite'</code></td><td>Empty side of an open range</td></tr>
+                <tr><td><code>vacio</code></td><td><code>data-vacio</code></td><td>from <code>locale</code></td><td>What choosing no range means</td></tr>
+                <tr><td><code>sinLimite</code></td><td><code>data-sin-limite</code></td><td>from <code>locale</code></td><td>Empty side of an open range</td></tr>
                 <tr><td><code>presets</code></td><td><code>data-presets="false"</code></td><td><code>true</code></td><td><code>true</code>, <code>false</code> or <code>[{label, desde, hasta}]</code></td></tr>
                 <tr><td><code>months</code></td><td><code>data-months</code></td><td><code>2</code></td><td>Visible months (1 on mobile)</td></tr>
                 <tr><td><code>autoAdvance</code></td><td><code>data-auto-advance="false"</code></td><td><code>true</code></td><td>From complete → To</td></tr>
+                <tr><td><code>time</code></td><td><code>data-time="true"</code> / <code>"only"</code></td><td><code>false</code></td><td><code>false</code> date · <code>true</code> date + optional time (<code>YYYY-MM-DDTHH:mm</code>) · <code>'only'</code> time (<code>HH:mm</code>)</td></tr>
+                <tr><td><code>step</code></td><td><code>data-step</code></td><td><code>30</code></td><td>Minutes between the times offered in the panel</td></tr>
                 <tr><td><code>onChange</code></td><td>—</td><td><code>null</code></td><td><code>fn({desde, hasta})</code></td></tr>
-                <tr><td><code>locale</code></td><td>—</td><td>Spanish</td><td>Texts, month and day names</td></tr>
+                <tr><td><code>locale</code></td><td><code>data-locale</code></td><td><code>'es'</code></td><td><code>'es'</code>, <code>'en'</code> or <code>{ base, …texts }</code></td></tr>
             </tbody>
         </table>
         <div class="two" style="margin-top:1.25rem">
             <table>
                 <thead><tr><th>Method</th><th></th></tr></thead>
                 <tbody>
-                    <tr><td><code>getValue()</code></td><td><code>{desde, hasta}</code> as ISO</td></tr>
+                    <tr><td><code>getValue()</code></td><td><code>{desde, hasta, from, to}</code> as ISO</td></tr>
                     <tr><td><code>setValue(d, h)</code></td><td>ISO, <code>Date</code> or <code>null</code></td></tr>
                     <tr><td><code>clear()</code></td><td>Clears the range</td></tr>
                     <tr><td><code>setLimits(min, max)</code></td><td>Changes the limits</td></tr>
@@ -506,11 +560,14 @@ new RangeSelector('#quarter', {
     var hoy = new Date(); hoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     var y = hoy.getFullYear();
 
-    /* ---------- Instancias de los ejemplos ---------- */
+    /* ---------- Example instances ---------- */
     new RangeSelector('#hero-rs', { desde: new Date(y, hoy.getMonth(), 1), hasta: hoy });
     new RangeSelector('#ex2', {
         min: new Date(y - 1, hoy.getMonth(), hoy.getDate()), max: hoy,
         desde: new Date(y, hoy.getMonth(), 1), hasta: hoy, vacio: 'This month',
+    });
+    new RangeSelector('#ex8', {
+        time: 'only', desde: '09:00', hasta: '18:00', min: '07:00', max: '22:00',
     });
     new RangeSelector('#ex4', {
         presets: [
@@ -521,7 +578,7 @@ new RangeSelector('#quarter', {
         ],
     });
 
-    // Valor en vivo debajo de cada ejemplo.
+    // Live value below each example.
     function fmt(v) {
         return '<span>desde:</span> <b>' + (v.desde || '—') + '</b> &nbsp; <span>hasta:</span> <b>' + (v.hasta || '—') + '</b>';
     }
@@ -532,7 +589,7 @@ new RangeSelector('#quarter', {
         show();
     });
 
-    // Form del ejemplo 6: mostrar la querystring en vez de navegar.
+    // Example 6 form: show the query string instead of navigating.
     document.getElementById('ex6-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var p = new URLSearchParams();
@@ -540,10 +597,10 @@ new RangeSelector('#quarter', {
         document.getElementById('ex6-out').textContent = p.toString() ? '?' + p : '(no dates)';
     });
 
-    /* ---------- Bloques de código: resaltado mínimo + copiar ---------- */
+    /* ---------- Code blocks: minimal highlighting + copy ---------- */
     function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-    /* Cada muestra de código vive en un textarea oculto: su contenido es texto
-       crudo, así que puede llevar etiquetas script sin cortar la página. */
+    /* Each code sample lives in a hidden textarea: its content is raw text,
+       so it can contain script tags without breaking the page. */
     document.querySelectorAll('.code > textarea[data-lang]').forEach(function (src) {
         var text = src.value.replace(/^\n/, '');
         var box = src.parentNode;
@@ -576,13 +633,21 @@ new RangeSelector('#quarter', {
     }
 
     function build() {
-        var value = play ? play.getValue() : { desde: null, hasta: null };
+        var time = { 'false': false, 'true': true, only: 'only' }[$('p-time').value];
+        // Switching modes changes the value format: it's kept only within the same mode.
+        var value = play && play.o.time === time ? play.getValue() : { desde: null, hasta: null };
         if (play) play.destroy();
+        $('p-min').type = $('p-max').type = time === 'only' ? 'time' : time ? 'datetime-local' : 'date';
+        // The default empty text follows the mode («Todo el día» for time only).
+        var vacio = $('p-vacio');
+        if (vacio.value === 'Todas las fechas' || vacio.value === 'Todo el día') vacio.value = time === 'only' ? 'Todo el día' : 'Todas las fechas';
         play = new RangeSelector(host, {
+            time: time,
+            step: +$('p-step').value,
             presets: $('p-presets').checked,
             months: $('p-months').checked ? 2 : 1,
             autoAdvance: $('p-advance').checked,
-            vacio: $('p-vacio').value || 'Todas las fechas',
+            vacio: $('p-vacio').value || undefined,
             sinLimite: $('p-sinlimite').value || 'Sin límite',
             min: $('p-min').value || null,
             max: $('p-max').value || null,
@@ -602,7 +667,7 @@ new RangeSelector('#quarter', {
         s.setProperty('--rs-height', $('p-height').value);
         s.setProperty('--rs-radius', $('p-radius').value);
     }
-    ['p-presets', 'p-months', 'p-advance', 'p-min', 'p-max'].forEach(function (id) {
+    ['p-presets', 'p-months', 'p-advance', 'p-time', 'p-step', 'p-min', 'p-max'].forEach(function (id) {
         $(id).addEventListener('change', function () { build(); log('option', id.slice(2) + ' → ' + ($(id).type === 'checkbox' ? $(id).checked : ($(id).value || 'null'))); });
     });
     ['p-vacio', 'p-sinlimite'].forEach(function (id) {
@@ -616,8 +681,11 @@ new RangeSelector('#quarter', {
         if (!b) return;
         switch (b.dataset.api) {
             case 'getValue': log('getValue()', JSON.stringify(play.getValue())); break;
-            case 'mes': play.setValue(new Date(y, hoy.getMonth(), 1), new Date(y, hoy.getMonth() + 1, 0)); log('setValue', 'current month'); break;
-            case 'abierto': play.setValue(hoy, null); log('setValue', 'today → no limit'); break;
+            case 'mes':
+                if (play.o.time === 'only') { play.setValue('09:00', '18:00'); log('setValue', "'09:00', '18:00'"); }
+                else { play.setValue(new Date(y, hoy.getMonth(), 1), new Date(y, hoy.getMonth() + 1, 0, 23, 59)); log('setValue', 'current month'); }
+                break;
+            case 'abierto': play.setValue(play.o.time === 'only' ? new Date() : hoy, null); log('setValue', 'now → no limit'); break;
             case 'clear': play.clear(); log('clear()', ''); break;
             case 'open': play.open('hasta'); log('open', "'hasta'"); break;
             case 'validate': log('validate()', String(play.validate())); break;

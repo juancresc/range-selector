@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>RangeSelector — tests en el browser</title>
+<title>RangeSelector — browser tests</title>
 <link rel="stylesheet" href="../src/range-selector.css">
 </head>
 <body>
 <!--
-  Pruebas de interacción en un browser real. Abrir el archivo y mirar el resultado,
-  o headless:  "Google Chrome" --headless=new --dump-dom file://…/test/browser.html
+  Interaction tests in a real browser. Open the file and look at the result,
+  or headless:  "Google Chrome" --headless=new --dump-dom file://…/test/browser.html
 -->
 <form id="f"><div id="rs"></div><button type="submit">ok</button></form>
-<pre id="results">corriendo…</pre>
+<pre id="results">running…</pre>
 <script src="../src/range-selector.js"></script>
 <script>
 (function () {
@@ -29,6 +29,7 @@
             input.dispatchEvent(new Event('input', { bubbles: true }));
         }
     }
+    function pair(v) { return v.desde + '|' + v.hasta; }
     function blurAll() { document.activeElement && document.activeElement.blur(); }
 
     var el = document.getElementById('rs');
@@ -36,120 +37,266 @@
     var desde = rs.f.desde.input, hasta = rs.f.hasta.input;
     var hid = function () { return [rs.hidden.desde.value, rs.hidden.hasta.value]; };
 
-    // Estado inicial
-    check('vacío muestra el texto de vacío', el.classList.contains('rs-is-empty') &&
+    // Initial state
+    check('empty shows the empty text', el.classList.contains('rs-is-empty') &&
         el.querySelector('.rs-vacio').textContent === 'Todas las fechas');
 
-    // Tipear Desde completo: máscara, hidden y salto a Hasta
+    // Typing a full From: mask, hidden input and jump to To
     type(desde, '01102026');
-    check('máscara arma dd/mm/aaaa', desde.value === '01/10/2026', desde.value);
-    check('hidden desde en ISO', hid()[0] === '2026-10-01', hid());
-    check('Desde completo salta a Hasta', document.activeElement === hasta);
+    check('mask builds dd/mm/yyyy', desde.value === '01/10/2026', desde.value);
+    check('hidden desde in ISO', hid()[0] === '2026-10-01', hid());
+    check('full From jumps to To', document.activeElement === hasta);
 
-    // Guía mientras se tipea Hasta
+    // Guide while typing To
     type(hasta, '15');
-    check('guía muestra el resto', rs.f.hasta.rest.textContent === '/__/____', rs.f.hasta.rest.textContent);
+    check('guide shows the rest', rs.f.hasta.rest.textContent === '/__/____', rs.f.hasta.rest.textContent);
     type(hasta, '15102026');
     blurAll();
-    check('hidden hasta en ISO', hid()[1] === '2026-10-15', hid());
-    check('ya no está vacío', !el.classList.contains('rs-is-empty'));
+    check('hidden hasta in ISO', hid()[1] === '2026-10-15', hid());
+    check('no longer empty', !el.classList.contains('rs-is-empty'));
 
-    // Desde posterior a Hasta: se invierten
+    // From after To: they get swapped
     type(desde, '20102026');
     blurAll();
-    check('se invierten', hid()[0] === '2026-10-15' && hid()[1] === '2026-10-20', hid());
+    check('swapped', hid()[0] === '2026-10-15' && hid()[1] === '2026-10-20', hid());
 
-    // Año corto
+    // Short year
     type(hasta, '311026');
     blurAll();
-    check('año de 2 dígitos → 20aa', hid()[1] === '2026-10-31' && hasta.value === '31/10/2026', [hid(), hasta.value]);
+    check('2-digit year → 20yy', hid()[1] === '2026-10-31' && hasta.value === '31/10/2026', [hid(), hasta.value]);
 
-    // Inválida: error, hidden vacío, submit bloqueado
+    // Invalid: error, empty hidden input, submit blocked
     type(desde, '31022026');
     blurAll();
-    check('31/02 marca error', el.classList.contains('rs-has-error') && rs.hidden.desde.value === '', hid());
+    check('31/02 flags an error', el.classList.contains('rs-has-error') && rs.hidden.desde.value === '', hid());
     var ev = new Event('submit', { cancelable: true });
     document.getElementById('f').dispatchEvent(ev);
-    check('submit bloqueado con error', ev.defaultPrevented);
+    check('submit blocked on error', ev.defaultPrevented);
 
-    // Fuera de límites
+    // Out of limits
     type(desde, '01012025');
     blurAll();
-    check('fuera de min es error', /Fuera del rango/.test(rs.errorEl.textContent), rs.errorEl.textContent);
+    check('below min is an error', /Fuera del rango/.test(rs.errorEl.textContent), rs.errorEl.textContent);
 
-    // Rango abierto: sólo Desde
+    // Open range: From only
     rs.setValue('2026-03-01', null);
-    check('rango abierto vale', hid()[0] === '2026-03-01' && hid()[1] === '', hid());
-    check('lado vacío dice Sin límite', rs.f.hasta.rest.textContent === 'Sin límite', rs.f.hasta.rest.textContent);
+    check('open range is valid', hid()[0] === '2026-03-01' && hid()[1] === '', hid());
+    check('empty side says Sin límite', rs.f.hasta.rest.textContent === 'Sin límite', rs.f.hasta.rest.textContent);
 
-    // Calendario: Desde y Hasta por click
+    // Calendar: From and To by click
     rs.clear();
     rs.open('desde');
-    check('panel abierto', rs.isOpen() && el.querySelectorAll('.rs-month').length === 2);
-    check('campo activo marcado', rs.f.desde.field.classList.contains('rs-active'));
+    check('panel open', rs.isOpen() && el.querySelectorAll('.rs-month').length === 2);
+    check('active field highlighted', rs.f.desde.field.classList.contains('rs-active'));
     rs.setValue(null, null);
     rs.view = new Date(2026, 9, 1); rs._render();
     var day = function (iso) { return el.querySelector('.rs-day:not(.rs-out)[data-date="' + iso + '"]'); };
     day('2026-10-05').click();
-    check('click elige Desde y pasa a Hasta', hid()[0] === '2026-10-05' && rs.active === 'hasta' && rs.isOpen(), [hid(), rs.active]);
+    check('click picks From and moves on to To', hid()[0] === '2026-10-05' && rs.active === 'hasta' && rs.isOpen(), [hid(), rs.active]);
     day('2026-10-02').click();
-    check('día anterior a Desde reinicia', hid()[0] === '2026-10-02' && hid()[1] === '' && rs.isOpen(), hid());
+    check('day before From restarts', hid()[0] === '2026-10-02' && hid()[1] === '' && rs.isOpen(), hid());
     day('2026-10-09').click();
-    check('click en Hasta completa y cierra', hid()[1] === '2026-10-09' && !rs.isOpen(), hid());
+    check('click on To completes and closes', hid()[1] === '2026-10-09' && !rs.isOpen(), hid());
 
-    // Días fuera de límites deshabilitados
+    // Out-of-limits days disabled
     rs.open('desde');
     rs.view = new Date(2025, 11, 1); rs._render();
     var d1 = el.querySelector('.rs-day:not(.rs-out)[data-date="2025-12-31"]');
     var d2 = el.querySelector('.rs-day:not(.rs-out)[data-date="2026-01-01"]');
-    check('fuera de límites deshabilitado', d1 && d1.disabled && d2 && !d2.disabled);
+    check('out of limits disabled', d1 && d1.disabled && d2 && !d2.disabled);
 
-    // Atajo
+    // Preset
     var mes = Array.prototype.find.call(el.querySelectorAll('.rs-preset'), function (b) { return b.textContent === 'Hoy'; });
     mes.click();
     var hoy = RangeSelector.utils.toISO(RangeSelector.utils.today());
-    check('atajo Hoy', hid()[0] === hoy && hid()[1] === hoy && !rs.isOpen(), hid());
+    check('Hoy preset', hid()[0] === hoy && hid()[1] === hoy && !rs.isOpen(), hid());
 
-    // Botón de vacío
+    // Clear button
     rs.open();
     el.querySelector('[data-rs-clear]').click();
-    check('botón vacío limpia', hid()[0] === '' && hid()[1] === '' && !rs.isOpen(), hid());
+    check('clear button clears', hid()[0] === '' && hid()[1] === '' && !rs.isOpen(), hid());
 
-    // Evento change
+    // change event
     var got = null;
     el.addEventListener('rangeselector:change', function (e) { got = e.detail; });
     rs.setValue('2026-05-01', '2026-05-31');
-    check('evento rangeselector:change', got && got.desde === '2026-05-01' && got.hasta === '2026-05-31', got);
+    check('rangeselector:change event', got && got.desde === '2026-05-01' && got.hasta === '2026-05-31', got);
 
-    // Click en un campo: calendario de esa sola fecha
+    // Click on a field: calendar for that single date
     rs.close();
     rs.setValue('2026-10-05', '2026-10-20');
     rs.f.hasta.field.click();
-    check('click en Hasta abre el calendario de esa fecha', rs.isOpen() && rs.active === 'hasta' && rs.mode === 'campo' &&
+    check('click on To opens the calendar for that date', rs.isOpen() && rs.active === 'hasta' && rs.mode === 'campo' &&
         rs.f.hasta.field.classList.contains('rs-active'), [rs.isOpen(), rs.active, rs.mode]);
     var d04 = el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-04"]');
-    check('modo campo: días antes de Desde deshabilitados para Hasta', d04 && d04.disabled);
+    check('campo mode: days before From disabled for To', d04 && d04.disabled);
     el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-25"]').click();
-    check('elegir un día cambia sólo Hasta y cierra', hid()[0] === '2026-10-05' && hid()[1] === '2026-10-25' && !rs.isOpen(), hid());
+    check('picking a day changes only To and closes', hid()[0] === '2026-10-05' && hid()[1] === '2026-10-25' && !rs.isOpen(), hid());
     rs.f.desde.field.click();
     el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-01"]').click();
-    check('elegir en Desde cambia sólo Desde y cierra', hid()[0] === '2026-10-01' && hid()[1] === '2026-10-25' && !rs.isOpen(), hid());
-    // El botón abre el calendario de rango
+    check('picking in From changes only From and closes', hid()[0] === '2026-10-01' && hid()[1] === '2026-10-25' && !rs.isOpen(), hid());
+    // The button opens the range calendar
     rs.btn.click();
-    check('el botón abre en modo rango', rs.isOpen() && rs.mode === 'rango', rs.mode);
+    check('the button opens in rango mode', rs.isOpen() && rs.mode === 'rango', rs.mode);
     rs.close();
 
-    // Escape cierra
+    // Hover preview: symmetric for From and To, and the replaced end keeps a ring
+    rs.setValue('2026-10-05', '2026-10-20');
+    function day(iso) { return el.querySelector('.rs-day:not(.rs-out)[data-date="' + iso + '"]'); }
+    function hover(iso) { day(iso).dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); }
+    rs.open('desde', 'campo');
+    hover('2026-10-02');
+    check('hover on From previews day → To', day('2026-10-02').classList.contains('rs-start') &&
+        day('2026-10-03').classList.contains('rs-in-range') && day('2026-10-20').classList.contains('rs-end'));
+    check('hover on From: current From keeps a ring', day('2026-10-05').classList.contains('rs-current') &&
+        !day('2026-10-05').classList.contains('rs-start'));
+    rs.close();
+    rs.open('hasta', 'campo');
+    hover('2026-10-25');
+    check('hover on To previews From → day', day('2026-10-05').classList.contains('rs-start') &&
+        day('2026-10-22').classList.contains('rs-in-range') && day('2026-10-25').classList.contains('rs-end'));
+    check('hover on To: current To keeps a ring', day('2026-10-20').classList.contains('rs-current') &&
+        !day('2026-10-20').classList.contains('rs-end'));
+    el.querySelector('.rs-months').dispatchEvent(new MouseEvent('mouseleave'));
+    check('mouse leaving clears the preview and the ring', !el.querySelector('.rs-current') &&
+        day('2026-10-20').classList.contains('rs-end'));
+    rs.close();
+
+    // Escape closes
     rs.open();
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    check('Escape cierra', !rs.isOpen());
+    check('Escape closes', !rs.isOpen());
 
     // destroy
     rs.destroy();
-    check('destroy limpia', el.innerHTML === '' && !el.rangeSelector);
+    check('destroy cleans up', el.innerHTML === '' && !el.rangeSelector);
 
-    out.unshift(fails ? fails + ' FALLARON' : 'TODO OK (' + out.length + ')');
-    document.getElementById('results').textContent = out.join('\n');
+    /* ---------- time: true ---------- */
+    rs = new RangeSelector(el, { time: true, step: 30, min: '2026-01-01', max: '2026-12-31' });
+    desde = rs.f.desde.input; hasta = rs.f.hasta.input;
+    check('with time: class and maxlength', el.classList.contains('rs-datetime') && desde.maxLength === 16, desde.maxLength);
+    type(desde, '011020260830');
+    check('with time: mask dd/mm/yyyy hh:mm', desde.value === '01/10/2026 08:30', desde.value);
+    check('with time: hidden with THH:mm', hid()[0] === '2026-10-01T08:30', hid());
+    check('with time: full From jumps to To', document.activeElement === hasta);
+    type(hasta, '15102026');
+    blurAll();
+    check('with time: without a time, To is 23:59', hid()[1] === '2026-10-15T23:59' && hasta.value === '15/10/2026 23:59', [hid(), hasta.value]);
+    type(desde, '01102026');
+    blurAll();
+    check('with time: without a time, From is 00:00', hid()[0] === '2026-10-01T00:00', hid());
+    type(desde, '010220262500');
+    blurAll();
+    check('with time: 25:00 is an error', el.classList.contains('rs-has-error') &&
+        rs.errorEl.textContent.indexOf('hh:mm') > -1, rs.errorEl.textContent);
+    rs.setValue('2026-10-05T10:00', '2026-10-05T18:00');
+    check('with time: setValue/getValue', pair(rs.getValue()) === '2026-10-05T10:00|2026-10-05T18:00', rs.getValue());
+    rs.open('desde', 'campo');
+    var tl = el.querySelector('.rs-tlist');
+    check('with time: time list', tl && tl.children.length === 48);
+    check('with time: current time highlighted', tl.children[20].classList.contains('rs-on'));
+    check('with time: same day, From after To is not offered', !tl.children[36].disabled && tl.children[37].disabled);
+    tl.children[18].click();
+    check('with time: picking a time changes only the time', hid()[0] === '2026-10-05T09:00' && rs.isOpen(), hid());
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-03"]').click();
+    check('with time: picking a day keeps the time and does not close', hid()[0] === '2026-10-03T09:00' && rs.isOpen(), hid());
+    rs.close();
+    rs.open();
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-02"]').click();
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-09"]').click();
+    check('with time: range by days keeps the times', hid()[0] === '2026-10-02T09:00' && hid()[1] === '2026-10-09T18:00', hid());
+    var hoyP = Array.prototype.find.call(el.querySelectorAll('.rs-preset'), function (b) { return b.textContent === 'Hoy'; });
+    hoyP.click();
+    check('with time: Hoy preset is the whole day', hid()[0] === hoy + 'T00:00' && hid()[1] === hoy + 'T23:59', hid());
+    rs.destroy();
+    check('with time: destroy removes the class', !el.classList.contains('rs-datetime'));
+
+    /* ---------- time: 'only' ---------- */
+    rs = new RangeSelector(el, { time: 'only', step: 60, min: '07:00', max: '22:00' });
+    desde = rs.f.desde.input; hasta = rs.f.hasta.input;
+    check('time only: no presets, empty is Todo el día', !el.querySelector('.rs-presets') &&
+        el.querySelector('.rs-vacio').textContent === 'Todo el día');
+    type(desde, '0830');
+    check('time only: mask hh:mm', desde.value === '08:30' && hid()[0] === '08:30', [desde.value, hid()]);
+    check('time only: complete jumps to To', document.activeElement === hasta);
+    type(hasta, '0600');
+    blurAll();
+    check('time only: below min is an error', el.classList.contains('rs-has-error'));
+    type(hasta, '1800');
+    blurAll();
+    check('time only: To', hid()[1] === '18:00' && !el.classList.contains('rs-has-error'), hid());
+    rs.clear();
+    rs.btn.click();
+    tl = el.querySelector('.rs-tlist');
+    check('time only: the button opens the list, no months', rs.isOpen() && tl.children.length === 24 &&
+        getComputedStyle(el.querySelector('.rs-months')).display === 'none');
+    check('time only: out of limits disabled', tl.children[6].disabled && !tl.children[7].disabled && tl.children[23].disabled);
+    check('time only: focus in the list', document.activeElement && document.activeElement.classList.contains('rs-tbtn'));
+    tl.children[9].click();
+    check('time only: From and moves on to To', hid()[0] === '09:00' && rs.active === 'hasta' && rs.isOpen(), [hid(), rs.active]);
+    tl.children[17].click();
+    check('time only: To completes and closes', hid()[1] === '17:00' && !rs.isOpen(), hid());
+    rs.setValue('10:00', '12:00');
+    check('time only: setValue', pair(rs.getValue()) === '10:00|12:00', rs.getValue());
+    rs.setValue('18:00', '09:00');
+    check('time only: swapped', pair(rs.getValue()) === '09:00|18:00', rs.getValue());
+    rs.destroy();
+
+    /* ---------- Robustness ---------- */
+    rs = new RangeSelector(el, { time: true, step: 0, months: 'x' });
+    check('step 0 does not hang: the default is used', rs.o.step === 30 && rs.o.months === 2, [rs.o.step, rs.o.months]);
+    rs.destroy();
+    rs = new RangeSelector(el, { vacio: undefined });
+    check('undefined option does not override the default', el.querySelector('.rs-vacio').textContent === 'Todas las fechas');
+    rs.destroy();
+    rs = new RangeSelector(el, { time: true, min: '2026-10-01T12:00', max: '2026-10-31T18:00' });
+    rs.open();
+    rs.view = new Date(2026, 9, 1); rs._render();
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-01"]').click();
+    el.querySelector('.rs-day:not(.rs-out)[data-date="2026-10-31"]').click();
+    check('with time: the limit day is clamped to the limit time', hid()[0] === '2026-10-01T12:00' && hid()[1] === '2026-10-31T18:00', hid());
+    rs.destroy();
+    rs = new RangeSelector(el, { locale: { formatos: { 'false': 'dd/mm/yyyy' }, dia: function (d) { return 'day ' + d.getDate(); },
+        months: ['<b>Jan</b>', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] } });
+    rs.open();
+    check('locale: aria-label format', rs.f.desde.input.getAttribute('aria-label') === 'Desde (dd/mm/yyyy)', rs.f.desde.input.getAttribute('aria-label'));
+    check('locale: day aria-labels', /^day \d+$/.test(el.querySelector('.rs-day').getAttribute('aria-label')));
+    check('locale: texts escaped', !el.querySelector('.rs-mtitle b'));
+    rs.destroy();
+
+    /* ---------- English aliases and 'en' locale ---------- */
+    el.setAttribute('data-from', '2026-10-01');
+    el.setAttribute('data-name-to', 'end');
+    rs = new RangeSelector(el, { locale: 'en', to: '2026-10-11', nameFrom: 'start' });
+    var v = rs.getValue();
+    check('alias: from/to from data-* and JS', v.from === '2026-10-01' && v.to === '2026-10-11' && v.desde === v.from && v.hasta === v.to, v);
+    check('alias: nameFrom/nameTo', rs.hidden.desde.name === 'start' && rs.hidden.hasta.name === 'end', [rs.hidden.desde.name, rs.hidden.hasta.name]);
+    check("locale 'en': labels and presets", el.querySelector('.rs-tag').textContent === 'From' &&
+        el.querySelector('.rs-preset').textContent === 'Today');
+    rs.open('to', 'field');
+    check("alias: open('to', 'field')", rs.active === 'hasta' && rs.mode === 'campo', [rs.active, rs.mode]);
+    check("locale 'en': day aria-labels", /^October \d+, 2026$/.test(el.querySelector('.rs-day:not(.rs-out)').getAttribute('aria-label')));
+    rs.clear(); rs.close();
+    check("locale 'en': default empty text", el.querySelector('.rs-vacio').textContent === 'All dates');
+    rs.destroy();
+    el.removeAttribute('data-from'); el.removeAttribute('data-name-to');
+    rs = new RangeSelector(el, { locale: { base: 'en', listo: 'OK' }, time: 'only', empty: 'Anytime',
+        presets: [{ label: 'Morning', from: '08:00', to: '12:00' }] });
+    check('locale: base + overrides', el.querySelector('[data-rs-done]').textContent === 'OK' && el.querySelector('.rs-tag').textContent === 'From');
+    check('alias: empty', el.querySelector('.rs-vacio').textContent === 'Anytime');
+    el.querySelector('.rs-preset').click();
+    check('alias: presets with from/to', pair(rs.getValue()) === '08:00|12:00', rs.getValue());
+    rs.destroy();
+    rs = new RangeSelector(el, {});
+    rs.open();
+    var input = rs.f.desde.input;
+    input.focus(); input.blur();
+    rs.destroy();
+    setTimeout(function () {
+        check('destroy with a pending focusout leaves no classes', el.className === '', el.className);
+        out.unshift(fails ? fails + ' FAILED' : 'ALL OK (' + out.length + ')');
+        document.getElementById('results').textContent = out.join('\n');
+    }, 10);
 })();
 </script>
 </body>

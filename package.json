@@ -1,14 +1,44 @@
 {
   "name": "range-selector",
-  "version": "0.1.0",
-  "description": "Selector de rango de fechas «Desde → Hasta»: dos inputs con máscara y un calendario, sin dependencias.",
+  "version": "0.2.0",
+  "description": "Usability-first date range picker: two masked, typeable inputs (From → To) and a calendar, with optional time. No dependencies.",
+  "keywords": [
+    "date-range",
+    "daterangepicker",
+    "date-picker",
+    "datepicker",
+    "time-range",
+    "calendar",
+    "range",
+    "input-mask",
+    "vanilla-js",
+    "accessible"
+  ],
+  "homepage": "https://juancresc.github.io/range-selector/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juancresc/range-selector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/juancresc/range-selector/issues"
+  },
+  "author": "Juan Crescente <juan.crescente@gmail.com>",
+  "license": "MIT",
   "main": "src/range-selector.js",
+  "types": "src/range-selector.d.ts",
   "style": "src/range-selector.css",
+  "exports": {
+    ".": {
+      "types": "./src/range-selector.d.ts",
+      "default": "./src/range-selector.js"
+    },
+    "./range-selector.css": "./src/range-selector.css",
+    "./package.json": "./package.json"
+  },
   "files": ["src"],
+  "sideEffects": ["*.css", "./src/range-selector.js"],
   "scripts": {
     "test": "node --test",
     "demo": "python3 -m http.server 8090"
-  },
-  "license": "UNLICENSED",
-  "private": true
+  }
 }
