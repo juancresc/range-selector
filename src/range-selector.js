@@ -294,7 +294,19 @@
         this.btn.setAttribute('aria-label', this.o.locale.cerrar);
         this._render();
         this._sync();
+        this._place();
         return this;
+    };
+
+    /* El panel sale alineado a la izquierda del control; si así se pasa del borde
+       derecho de la ventana se corre a la izquierda lo justo, sin pasarse del
+       izquierdo. */
+    RangeSelector.prototype._place = function () {
+        var p = this.panelEl, margin = 8;
+        p.style.left = '';
+        var r = p.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+        var shift = Math.max(Math.min(0, vw - margin - r.right), margin - r.left);
+        if (shift) p.style.left = shift + 'px';
     };
 
     RangeSelector.prototype.close = function (refocus) {
@@ -357,6 +369,7 @@
         this.btn = el.querySelector('.rs-btn');
         this.monthsEl = el.querySelector('.rs-months');
         this.presetsEl = el.querySelector('.rs-presets');
+        this.panelEl = el.querySelector('.rs-panel');
         this.hintEl = el.querySelector('.rs-hint');
         this.errorEl = el.querySelector('.rs-error');
         var hidden = el.querySelectorAll('input[type=hidden]');
@@ -460,6 +473,7 @@
         this._on(document, 'mousedown', function (e) {
             if (self.isOpen() && !el.contains(e.target)) self.close(false);
         });
+        this._on(window, 'resize', function () { if (self.isOpen()) self._place(); });
         this._on(el, 'keydown', function (e) {
             if (e.key === 'Escape' && self.isOpen()) { e.preventDefault(); self.close(true); }
         });
